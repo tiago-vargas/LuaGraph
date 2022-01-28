@@ -10,6 +10,16 @@ Default = {
 	-- color
 }
 
+local function unpackgraph(graph)
+	--[[ unpacks set of points into a sequence {x1, y1, x2, y2, ...} ]]
+	local coordinates = {}
+	for i = 1, #graph do
+		table.insert(coordinates, graph[i].x)
+		table.insert(coordinates, graph[i].y)
+	end
+
+	return coordinates
+end
 
 F_metatables = {
 	__mul = function (graph, transformation)
@@ -52,11 +62,11 @@ Function = {
 	-- 	return o
 	-- end
 
-	-- Plot = function (self)
-	-- 	--[[ Draws the graph ]]
-	-- 	love.graphics.line(unpackgraph(self.graph + Origin))
+	Plot = function (graph)
+		--[[ Draws the graph ]]
+		love.graphics.line(unpackgraph(graph + Origin))
 
-	-- end,
+	end,
 
 	NewDomain = function (a, b, numpoints)
 		--[[ creates a domain of values with ends in `a` and `b`, with `numpoints` points ]]
@@ -97,17 +107,6 @@ metat = {
 		return Graph
 	end
 }
-
-local function unpackgraph(graph)
-	--[[ unpacks set of points into a sequence {x1, y1, x2, y2, ...} ]]
-	local coordinates = {}
-	for i = 1, #graph do
-		table.insert(coordinates, graph[i].x)
-		table.insert(coordinates, graph[i].y)
-	end
-
-	return coordinates
-end
 
 function F(x, func)
 	local exp = func:gsub("x", x)
@@ -153,7 +152,7 @@ function love.draw()
 	-- love.graphics.setLineWidth(1)
 	drawaxis({x = Origin.x, y = Origin.y}, Viewport.width, Viewport.height)
 	-- love.graphics.points(Graph)
-	love.graphics.line(unpackgraph(Graph + Origin))
+	Function.Plot(Graph)
 end
 
 function love.keypressed(key)
