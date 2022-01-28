@@ -90,24 +90,6 @@ Function = {
 	end
 }
 
-metat = {
-	__mul = function (Graph, transformation)
-		for i = 1, #Graph do
-			Graph[i].x = Graph[i].x * transformation.Lx
-			Graph[i].y = Graph[i].y * transformation.Ly
-		end
-		return Graph
-	end,
-
-	__add = function (Graph, point)
-		for i = 1, #Graph do
-			Graph[i].x = Graph[i].x + point.x
-			Graph[i].y = Graph[i].y + point.y
-		end
-		return Graph
-	end
-}
-
 function F(x, func)
 	local exp = func:gsub("x", x)
 	return load("return " .. exp)()
@@ -132,7 +114,7 @@ end
 
 function love.update(dt)
 	Graph = Function.NewGraph(Domain, F)
-	setmetatable(Graph, metat)
+	setmetatable(Graph, F_metatables)
 	Graph = Graph * Scale
 
 	if love.keyboard.isDown("up") then
