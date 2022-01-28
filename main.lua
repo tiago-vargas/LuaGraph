@@ -1,4 +1,4 @@
-Exp = "x"
+Exp = "x*x/2"
 Origin = {}
 Domain = {}
 Graph = {}
@@ -19,6 +19,10 @@ local function unpackgraph(graph)
 	end
 
 	return coordinates
+end
+
+local function dist(P, Q)
+	return math.sqrt( (P.x - Q.x)^2 + (P.y - Q.y)^2 )
 end
 
 F_metatables = {
@@ -87,6 +91,21 @@ Function = {
 		end
 
 		return graph
+	end,
+
+	GetCOM = function (graph)
+		local Sx, Sy, L = 0, 0, 0
+		for i = 1, #graph-1 do
+			local dL = dist(graph[i], graph[i+1])
+			L = L + dL
+			Sx = Sx + graph[i].x * dL
+			Sy = Sy + graph[i].y * dL
+		end
+		return {x = Sx / L, y = Sy / L}
+	end,
+
+	PrintCOM = function (cm)
+		love.graphics.circle("fill", cm.x, cm.y, 4)
 	end
 }
 
@@ -105,9 +124,9 @@ end
 function love.load(args)
 	Viewport.width, Viewport.height = love.graphics.getDimensions()
 	Origin = {x = Viewport.width/2, y = Viewport.height/2}
-	Scale = {Lx = 1, Ly = 1}
+	Scale = {Lx = 50, Ly = 50}
 
-	Domain = Function.NewDomain(-50, 50, 100)
+	Domain = Function.NewDomain(-3, 3, 600)
 
 	d = 4
 end
@@ -135,6 +154,8 @@ function love.draw()
 	drawaxis({x = Origin.x, y = Origin.y}, Viewport.width, Viewport.height)
 	-- love.graphics.points(Graph)
 	Function.Plot(Graph)
+	local com = Function.GetCOM(Graph)
+	Function.PrintCOM(com)
 end
 
 function love.keypressed(key)
