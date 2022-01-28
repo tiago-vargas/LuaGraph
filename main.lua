@@ -10,31 +10,75 @@ Default = {
 	-- color
 }
 
+
+F_metatables = {
+	__mul = function (graph, transformation)
+		for i = 1, #graph do
+			graph[i].x = graph[i].x * transformation.Lx
+			graph[i].y = graph[i].y * transformation.Ly
+		end
+		return graph
+	end,
+
+	__add = function (graph, point)
+		for i = 1, #graph do
+			graph[i].x = graph[i].x + point.x
+			graph[i].y = graph[i].y + point.y
+		end
+		return graph
+	end
+}
+
 Function = {
 	--[[
-		color
-		mode
-		name
 		expression
 		domain
 		graph
+		color
+		mode
+		thickness
 		c.o.m.
 		roots
 	]]
 
-	New = function (exp, domain, color)
-		local o = {}
-		o.exp    = exp
-		o.domain = domain
-		o.color  = color
-		return o
+	-- New = function (exp, domain)
+	-- 	local o  = {}
+	-- 	o.exp    = exp
+	-- 	o.domain = domain
+	-- 	-- o.graph  = graph
+	-- 	-- o.color  = color
+	-- 	o.plot = Function.Plot
+	-- 	setmetatable(o.graph, F_metatables)
+	-- 	return o
+	-- end
+
+	-- Plot = function (self)
+	-- 	--[[ Draws the graph ]]
+	-- 	love.graphics.line(unpackgraph(self.graph + Origin))
+
+	-- end,
+
+	NewDomain = function (a, b, numpoints)
+		--[[ creates a domain of values with ends in `a` and `b`, with `numpoints` points ]]
+		local domain = {}
+		local dx = (b-a) / (numpoints-1)
+		for i = a, b, dx do
+			table.insert(domain, i)
+		end
+
+		return domain
 	end,
 
-	Plot = function ()
+	NewGraph = function (domain, fun)
+		local graph = {}
+		for i = 1, #domain do
+			local x = domain[i]
+			graph[i] = {x = x, y = -fun(x, Exp)}
+		end
 
+		return graph
 	end
 }
-
 
 metat = {
 	__mul = function (Graph, transformation)
@@ -70,17 +114,6 @@ function F(x, func)
 	return load("return " .. exp)()
 end
 
-function CreateDomain(a, b, numpoints)
-	--[[ creates a domain of values with ends in `a` and `b`, with `numpoints` points ]]
-	local domain = {}
-	local dx = (b-a) / (numpoints-1)
-	for i = a, b, dx do
-		table.insert(domain, i)
-	end
-
-	return domain
-end
-
 local function drawaxis(origin, screen_width, screen_height)
 	-- draws 0x and 0y axis centered in `origin`
 	local Ox = love.graphics.line(0, origin.y, screen_width,  origin.y)
@@ -88,29 +121,18 @@ local function drawaxis(origin, screen_width, screen_height)
 	return Ox, Oy
 end
 
-local function makegraph(domain, fun)
-	local graph = {}
-	for i = 1, #domain do
-		local x = domain[i]
-		-- graph[i] = {x = x + origin.x, y = -fun(x, Exp) + origin.y}
-		graph[i] = {x = x, y = -fun(x, Exp)}
-	end
-
-	return graph
-end
-
 function love.load(args)
 	Viewport.width, Viewport.height = love.graphics.getDimensions()
 	Origin = {x = Viewport.width/2, y = Viewport.height/2}
 	Scale = {Lx = 1, Ly = 1}
 
-	Domain = CreateDomain(-50, 50, 100)
+	Domain = Function.NewDomain(-50, 50, 100)
 
 	d = 4
 end
 
 function love.update(dt)
-	Graph = makegraph(Domain, F)
+	Graph = Function.NewGraph(Domain, F)
 	setmetatable(Graph, metat)
 	Graph = Graph * Scale
 
