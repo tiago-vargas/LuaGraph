@@ -1,4 +1,4 @@
-Exp = "x*x/2"
+-- Exp = "(x-1)^2/2"
 Origin = {}
 Domain = {}
 Graph = {}
@@ -25,7 +25,29 @@ local function dist(P, Q)
 	return math.sqrt( (P.x - Q.x)^2 + (P.y - Q.y)^2 )
 end
 
-F_metatables = {
+-- metatables = {
+-- 	__index = function (table, key)
+-- 		return Function.prototype[key]
+-- 	end
+-- }
+
+-------------------------------------------------------------------------------
+--[[ NAMESPACE ]]
+Function = {}
+--[[
+	expression
+	domain
+	graph
+	color
+	mode
+	thickness
+	c.o.m.
+	roots
+]]
+
+
+
+Function.graph_metatables = {
 	__mul = function (graph, transformation)
 		for i = 1, #graph do
 			graph[i].x = graph[i].x * transformation.Lx
@@ -43,71 +65,72 @@ F_metatables = {
 	end
 }
 
-Function = {
-	--[[
-		expression
-		domain
-		graph
-		color
-		mode
-		thickness
-		c.o.m.
-		roots
-	]]
 
-	-- New = function (exp, domain)
-	-- 	local o  = {}
-	-- 	o.exp    = exp
-	-- 	o.domain = domain
-	-- 	-- o.graph  = graph
-	-- 	-- o.color  = color
-	-- 	o.plot = Function.Plot
-	-- 	setmetatable(o.graph, F_metatables)
-	-- 	return o
-	-- end
+--[[ Draws the graph ]]
+Function.Plot = function (self)
+	love.graphics.line(unpackgraph(self.graph + Origin))
+end
 
-	Plot = function (graph)
-		--[[ Draws the graph ]]
-		love.graphics.line(unpackgraph(graph + Origin))
-
-	end,
-
-	NewDomain = function (a, b, numpoints)
-		--[[ creates a domain of values with ends in `a` and `b`, with `numpoints` points ]]
-		local domain = {}
-		local dx = (b-a) / (numpoints-1)
-		for i = a, b, dx do
-			table.insert(domain, i)
-		end
-
-		return domain
-	end,
-
-	NewGraph = function (domain, fun)
-		local graph = {}
-		for i = 1, #domain do
-			local x = domain[i]
-			graph[i] = {x = x, y = -fun(x, Exp)}
-		end
-
-		return graph
-	end,
-
-	GetCOM = function (graph)
-		local Sx, Sy, L = 0, 0, 0
-		for i = 1, #graph-1 do
-			local dL = dist(graph[i], graph[i+1])
-			L = L + dL
-			Sx = Sx + graph[i].x * dL
-			Sy = Sy + graph[i].y * dL
-		end
-		return {x = Sx / L, y = Sy / L}
-	end,
-
-	PrintCOM = function (cm)
-		love.graphics.circle("fill", cm.x, cm.y, 4)
+--[[ Creates a domain of values with ends in `a` and `b`, with `numpoints` points ]]
+Function.SetDomain = function (self, a, b, numpoints)
+	self.domain = {}
+	local dx = (b-a) / (numpoints-1)
+	for i = a, b, dx do
+		table.insert(self.domain, i)
 	end
+end
+
+Function.SetGraph = function (self, fun)
+	self.graph = {}
+	for i = 1, #self.domain do
+		local x = self.domain[i]
+		self.graph[i] = {x = x, y = -fun(x, self.exp)}
+	end
+
+	setmetatable(self.graph, Function.graph_metatables)
+end
+
+Function.GetCOM = function (self)
+	local Sx, Sy, L = 0, 0, 0
+	for i = 1, #self.graph-1 do
+		local dL = dist(self.graph[i], self.graph[i+1])
+		L = L + dL
+		Sx = Sx + self.graph[i].x * dL
+		Sy = Sy + self.graph[i].y * dL
+	end
+
+	self.com = {x = Sx / L, y = Sy / L}
+end
+
+Function.PrintCOM = function (self)
+	love.graphics.circle("fill", self.com.x, self.com.y, 4)
+end
+
+Function.prototype = {
+	plot      = Function.Plot,
+	setDomain = Function.SetDomain,
+	setGraph  = Function.SetGraph,
+	getCOM    = Function.GetCOM,
+	printCOM  = Function.PrintCOM
 }
+
+Function.metatables = {
+	__index = Function.prototype
+}
+
+--[[ Creates a new instance of `Function` ]]
+Function.New = function (exp)
+	local o  = {}
+	o.exp    = exp
+	setmetatable(o, metatables)
+	-- o.plot      = Function.Plot
+	-- o.setDomain = Function.SetDomain
+	-- o.setGraph  = Function.SetGraph
+	-- o.getCOM    = Function.GetCOM
+	-- o.printCOM  = Function.PrintCOM
+	return o
+end
+
 
 function F(x, func)
 	local exp = func:gsub("x", x)
@@ -126,15 +149,17 @@ function love.load(args)
 	Origin = {x = Viewport.width/2, y = Viewport.height/2}
 	Scale = {Lx = 50, Ly = 50}
 
-	Domain = Function.NewDomain(-3, 3, 600)
+	-- Domain = Function.SetDomain(-3, 3, 600)
+	f = Function.New()
+	f.exp = "(x-1)^2/2"
+	f:setDomain(-3, 3, 600)
 
 	d = 4
 end
 
 function love.update(dt)
-	Graph = Function.NewGraph(Domain, F)
-	setmetatable(Graph, F_metatables)
-	Graph = Graph * Scale
+	f:setGraph(F)
+	f.graph = f.graph * Scale
 
 	if love.keyboard.isDown("up") then
 		Origin.y = Origin.y + d
@@ -152,10 +177,9 @@ end
 function love.draw()
 	-- love.graphics.setLineWidth(1)
 	drawaxis({x = Origin.x, y = Origin.y}, Viewport.width, Viewport.height)
-	-- love.graphics.points(Graph)
-	Function.Plot(Graph)
-	local com = Function.GetCOM(Graph)
-	Function.PrintCOM(com)
+	f:plot()
+	f:getCOM()
+	f:printCOM()
 end
 
 function love.keypressed(key)
