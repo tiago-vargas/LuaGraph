@@ -1,5 +1,5 @@
 -- Exp = "(x-1)^2/2"
-local Function = require("Function")
+Function = require("Function")
 
 -- Domain = {}
 -- Graph = {}
@@ -32,13 +32,17 @@ end
 
 function love.load(args)
 	Viewport.width, Viewport.height = love.graphics.getDimensions()
-	Origin = {x = Viewport.width/2, y = Viewport.height/2}
-	Scale = {Lx = 50, Ly = 50}
+	Origin = { x = Viewport.width/2, y = Viewport.height/2 }
+	Scale  = { Lx = 50, Ly = 50 }
 
 	-- [[   TEST   ]] --
 	f = Function.New()
 	f.exp = "(x-1)^2/2"
 	f:setDomain(-3, 3, 600)
+
+	g = Function.New()
+	g.exp = "math.sin(x)"
+	g:setDomain(-3, 3, 600)
 	-- f:computeCOM()
 	-- [[ END TEST ]] --
 
@@ -46,11 +50,18 @@ function love.load(args)
 end
 
 function love.update(dt)
-	-- [[   TEST   ]] --
-	f:computeGraph(F)
-	f.graph = f.graph * Scale
-	-- f:computeCOM() -- doesn't work here, but compiles...
-	-- [[ END TEST ]] --
+	-- -- [[   TEST   ]] --
+	-- f:computeGraph(F)
+	-- f.graph = f.graph * Scale
+	-- -- f:computeCOM() -- doesn't work here, but compiles...
+	-- -- [[ END TEST ]] --
+
+	for i = 1, #Function.instances do
+		local f = Function.instances[i]
+		f:computeGraph(F)
+		f.graph = f.graph * Scale
+		-- f:computeCOM()
+	end
 
 	if love.keyboard.isDown("up") then
 		Origin.y = Origin.y + d
@@ -66,10 +77,18 @@ function love.update(dt)
 end
 
 function love.draw()
-	drawaxis({x = Origin.x, y = Origin.y}, Viewport.width, Viewport.height)
-	f:plot()
-	f:computeCOM()
-	f:drawCOM()
+	drawaxis({ x = Origin.x, y = Origin.y }, Viewport.width, Viewport.height)
+
+	-- f:plot()
+	-- f:computeCOM()
+	-- f:drawCOM()
+
+	for i = 1, #Function.instances do
+		local f = Function.instances[i]
+		f:plot()
+		f:computeCOM()
+		f:drawCOM()
+	end
 end
 
 function love.keypressed(key)

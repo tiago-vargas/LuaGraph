@@ -1,5 +1,7 @@
 local Function = {}
 
+Function.instances = {}
+
 --[[ Prototype
 Function.prototype = {
 	plot      = Function.Plot,
@@ -20,6 +22,7 @@ Function.New = function (exp)
 	o.computeGraph  = Function.ComputeGraph
 	o.computeCOM    = Function.ComputeCOM
 	o.drawCOM  = Function.DrawCOM
+	table.insert(Function.instances, o)
 	return o
 end
 
