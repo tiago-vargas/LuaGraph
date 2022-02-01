@@ -4,7 +4,7 @@ local Function = require("Function")
 -- Domain = {}
 -- Graph = {}
 Origin = {}
-Scale = {}
+Scale  = {}
 
 Viewport = {}
 
@@ -25,9 +25,9 @@ end
 
 local function drawaxis(origin, screen_width, screen_height)
 	-- draws 0x and 0y axis centered in `origin`
-	local Ox = love.graphics.line(0, origin.y, screen_width,  origin.y)
-	local Oy = love.graphics.line(origin.x, 0, origin.x, screen_height)
-	return Ox, Oy
+	love.graphics.line(0, origin.y, screen_width,  origin.y) -- Ox
+	love.graphics.line(origin.x, 0, origin.x, screen_height) -- Oy
+	-- return Ox, Oy
 end
 
 function love.load(args)
@@ -35,18 +35,22 @@ function love.load(args)
 	Origin = {x = Viewport.width/2, y = Viewport.height/2}
 	Scale = {Lx = 50, Ly = 50}
 
+	-- [[   TEST   ]] --
 	f = Function.New()
 	f.exp = "(x-1)^2/2"
 	f:setDomain(-3, 3, 600)
-	-- f:getCOM()
+	-- f:computeCOM()
+	-- [[ END TEST ]] --
 
 	d = 4
 end
 
 function love.update(dt)
-	f:setGraph(F)
+	-- [[   TEST   ]] --
+	f:computeGraph(F)
 	f.graph = f.graph * Scale
-	-- f:getCOM() -- doesn't work here, but compiles...
+	-- f:computeCOM() -- doesn't work here, but compiles...
+	-- [[ END TEST ]] --
 
 	if love.keyboard.isDown("up") then
 		Origin.y = Origin.y + d
@@ -64,8 +68,8 @@ end
 function love.draw()
 	drawaxis({x = Origin.x, y = Origin.y}, Viewport.width, Viewport.height)
 	f:plot()
-	f:getCOM()
-	f:printCOM()
+	f:computeCOM()
+	f:drawCOM()
 end
 
 function love.keypressed(key)

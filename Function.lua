@@ -1,12 +1,14 @@
 local Function = {}
 
--- Function.prototype = {
--- 	plot      = Function.Plot,
--- 	setDomain = Function.SetDomain,
--- 	setGraph  = Function.SetGraph,
--- 	getCOM    = Function.GetCOM,
--- 	printCOM  = Function.PrintCOM
--- }
+--[[ Prototype
+Function.prototype = {
+	plot      = Function.Plot,
+	setDomain = Function.SetDomain,
+	setGraph  = Function.SetGraph,
+	getCOM    = Function.GetCOM,
+	printCOM  = Function.PrintCOM
+}
+]]
 
 --[[ Creates a new instance of `Function` ]]
 Function.New = function (exp)
@@ -15,9 +17,9 @@ Function.New = function (exp)
 	-- setmetatable(o, Function.metatables)
 	o.plot      = Function.Plot
 	o.setDomain = Function.SetDomain
-	o.setGraph  = Function.SetGraph
-	o.getCOM    = Function.GetCOM
-	o.printCOM  = Function.PrintCOM
+	o.computeGraph  = Function.ComputeGraph
+	o.computeCOM    = Function.ComputeCOM
+	o.drawCOM  = Function.DrawCOM
 	return o
 end
 
@@ -35,7 +37,7 @@ Function.SetDomain = function (self, a, b, numpoints)
 	end
 end
 
-Function.SetGraph = function (self, fun)
+Function.ComputeGraph = function (self, fun)
 	self.graph = {}
 	for i = 1, #self.domain do
 		local x = self.domain[i]
@@ -45,7 +47,7 @@ Function.SetGraph = function (self, fun)
 	setmetatable(self.graph, Function.graph_metatables)
 end
 
-Function.GetCOM = function (self)
+Function.ComputeCOM = function (self)
 	local Sx, Sy, L = 0, 0, 0
 	for i = 1, #self.graph-1 do
 		local dL = dist(self.graph[i], self.graph[i+1])
@@ -57,7 +59,7 @@ Function.GetCOM = function (self)
 	self.com = {x = Sx / L, y = Sy / L}
 end
 
-Function.PrintCOM = function (self)
+Function.DrawCOM = function (self)
 	love.graphics.circle("fill", self.com.x, self.com.y, 4)
 end
 
