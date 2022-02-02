@@ -3,7 +3,7 @@ Colors   = require("Colors")
 
 Origin = {}
 Scale  = {}
-Mode   = "polar"
+Mode   = "plane"
 
 Cor = {
 	-- "Black",
@@ -15,13 +15,14 @@ Cor = {
 	"Cyan",
 	-- "White",
 
+	-- "BrightBlack",
 	"BrightRed",
 	"BrightGreen",
 	"BrightYellow",
 	-- "BrightBlue",
 	"BrightPurple",
 	"BrightCyan",
-}
+}	-- "BrightWhite",
 ColorIndex = 1
 
 Viewport = {}
@@ -31,24 +32,6 @@ Default = {
 	Background = Colors.BrightWhite,
 	Scale      = { Lx = 50, Ly = 50 },
 }
-
--- Maybe change this name...
-function dist(P, Q)
-	local dx = P.x - Q.x
-	local dy = P.y - Q.y
-	return math.sqrt( dx ^ 2 + dy ^ 2 )
-end
-
---[[ Substitutes `x` for its value in an expression string ]]
-function Parser(x, funcexp)
-	local exp = funcexp:gsub("x", x)
-	-- exp = exp:gsub("sin",  "math.sin")
-	-- exp = exp:gsub("cos",  "math.cos")
-	-- exp = exp:gsub("tan",  "math.tan")
-	-- exp = exp:gsub("sqrt", "math.sqrt")
-	-- exp = exp:gsub("pi",   "math.pi")
-	return load("return " .. exp)()
-end
 
 --[[ draws 0x and 0y axes centered in `origin` ]]
 local function drawaxesxy(origin, screen_width, screen_height)
@@ -107,7 +90,7 @@ function love.update(dt)
 		for i = 1, Function.ID do
 			local f = Function.instances[i]
 			if f ~= nil and f.mode == "plane" then
-				f:computeGraph(Parser)
+				f:computeGraph()
 				f.graph = f.graph * Scale
 				-- f:computeCOM() -- doesn't work here, but compiles...
 			end
@@ -116,7 +99,7 @@ function love.update(dt)
 		for i = 1, Function.ID do
 			local f = Function.instances[i]
 			if f ~= nil and f.mode == "polar" then
-				f:computeGraphPolar(Parser)
+				f:computeGraphPolar()
 				f.graph = f.graph * Scale
 				-- f:computeCOM() -- doesn't work here, but compiles...
 			end
@@ -194,6 +177,7 @@ function love.keypressed(key)
 		debug.debug()
 	end
 
+	-- Not working!
 	if key == "kp0" or key == "0" then
 		Scale = Default.Scale
 	end
