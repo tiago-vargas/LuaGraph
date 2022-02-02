@@ -3,16 +3,24 @@ Colors   = require("Colors")
 
 Origin = {}
 Scale  = {}
+Mode   = "polar"
 
 Cor = {
 	-- "Black",
 	"Red",
 	"Green",
 	"Yellow",
-	"Blue",
+	-- "Blue",
 	"Purple",
 	"Cyan",
 	-- "White",
+
+	"BrightRed",
+	"BrightGreen",
+	"BrightYellow",
+	-- "BrightBlue",
+	"BrightPurple",
+	"BrightCyan",
 }
 ColorIndex = 1
 
@@ -31,17 +39,28 @@ function dist(P, Q)
 	return math.sqrt( dx ^ 2 + dy ^ 2 )
 end
 
-
-function F(x, func)
-	local exp = func:gsub("x", x)
+--[[ Substitutes `x` for its value in an expression string ]]
+function Parser(x, funcexp)
+	local exp = funcexp:gsub("x", x)
+	-- exp = exp:gsub("sin",  "math.sin")
+	-- exp = exp:gsub("cos",  "math.cos")
+	-- exp = exp:gsub("tan",  "math.tan")
+	-- exp = exp:gsub("sqrt", "math.sqrt")
+	-- exp = exp:gsub("pi",   "math.pi")
 	return load("return " .. exp)()
 end
 
 --[[ draws 0x and 0y axes centered in `origin` ]]
-local function drawaxis(origin, screen_width, screen_height)
+local function drawaxesxy(origin, screen_width, screen_height)
 	love.graphics.line(0, origin.y, screen_width,  origin.y) -- Ox
 	love.graphics.line(origin.x, 0, origin.x, screen_height) -- Oy
 end
+
+--[[ draws 0x polar axis centered in `origin` ]]
+-- local function drawaxispolar(origin, screen_width, screen_height)
+-- 	love.graphics.line(0, origin.y, screen_width,  origin.y) -- Ox
+-- 	love.graphics.line(origin.x, 0, origin.x, screen_height) -- Oy
+-- end
 
 function love.load(args)
 	Viewport.width, Viewport.height = love.graphics.getDimensions()
@@ -51,8 +70,10 @@ function love.load(args)
 	love.graphics.setBackgroundColor(Default.Background)
 
 -- [[   TEST   ]] --
+	-- [[ XY ]]
 	f = Function.New()
 	f.exp = "(x-1)^2/2"
+	f.mode = "plane"
 	-- f.color = Colors.BrightYellow
 	-- f:setDomain(-3, 3, 600)
 
@@ -62,26 +83,45 @@ function love.load(args)
 
 	h = Function.New("math.sqrt( 9 - (x-1)^2 )")
 	-- h.color = Colors.BrightPurple
-	h:setDomain(-3, 3, 600)
+	-- h:setDomain(-3, 3, 600)
 
-	i = Function.New("(x^5 - x^3 + 2*x - 4) / math.sin(x)")
-	i.color = Colors.BrightCyan
-	i:setDomain(-3, 3, 600)
+	i = Function.New("(x^5 - x^3 + 2*x - 4) / (x^3 - 5*x)")
+	-- i.color = Colors.BrightCyan
+	-- i:setDomain(-3, 3, 600)
+
+	-- j = Function.New("1/x")
+
+	-- [[ POLAR ]]
+	p = Function.New("math.sin(4*x)", "polar")
+	p:setDomain(0, 2 * math.pi, 100)
+
+	q = Function.New("math.sin(1.25*x)", "polar")
+	q:setDomain(0, 2 * math.pi, 70)
 -- [[ END TEST ]] --
 
 	d = 4
 end
 
 function love.update(dt)
-	for i = 1, Function.ID do
-		local f = Function.instances[i]
-		if f ~= nil then
-			f:computeGraph(F)
-			f.graph = f.graph * Scale
-			-- f:computeCOM() -- doesn't work here, but compiles...
+	if Mode == "plane" then
+		for i = 1, Function.ID do
+			local f = Function.instances[i]
+			if f ~= nil and f.mode == "plane" then
+				f:computeGraph(Parser)
+				f.graph = f.graph * Scale
+				-- f:computeCOM() -- doesn't work here, but compiles...
+			end
+		end
+	elseif Mode == "polar" then
+		for i = 1, Function.ID do
+			local f = Function.instances[i]
+			if f ~= nil and f.mode == "polar" then
+				f:computeGraphPolar(Parser)
+				f.graph = f.graph * Scale
+				-- f:computeCOM() -- doesn't work here, but compiles...
+			end
 		end
 	end
-
 	-- for k, v in pairs(Function.instances) do
 	-- 	if k ~= nil then
 	-- 		v:computeGraph(F)
@@ -89,6 +129,7 @@ function love.update(dt)
 	-- 		-- f:computeCOM() -- doesn't work here, but compiles...
 	-- 	end
 	-- end
+
 
 	if     love.keyboard.isDown("up")    then
 		Origin.y = Origin.y + d
@@ -124,11 +165,13 @@ function love.update(dt)
 end
 
 function love.draw()
-	drawaxis({ x = Origin.x, y = Origin.y }, Viewport.width, Viewport.height)
+	drawaxesxy({ x = Origin.x, y = Origin.y }, Viewport.width, Viewport.height)
+
+	-- drawaxispolar({ x = Origin.x, y = Origin.y }, Viewport.width, Viewport.height)
 
 	for i = 1, Function.ID do
 		local f = Function.instances[i]
-		if f ~= nil then
+		if f ~= nil and f.mode == Mode then
 			f:plot()
 			f:computeCOM()
 			f:drawCOM()

@@ -15,13 +15,15 @@ Function.prototype = {
 ]]
 
 --[[ Creates a new instance of `Function` ]]
-Function.New = function (exp, color)
+Function.New = function (exp, mode, color)
 	local o  = {}
 	o.exp    = exp
 	-- o.domain = domain
 	if o.domain == nil then
-		Function.SetDomain(o, -10, 10, 1800)
+		Function.SetDomain(o, -10, 10, 1000)
 	end
+
+	o.mode   = mode or "plane"
 
 	o.color  = color or Colors[Cor[ColorIndex]]
 	o.id     = Function.ID
@@ -33,6 +35,9 @@ Function.New = function (exp, color)
 	o.computeCOM    = Function.ComputeCOM
 	o.drawCOM       = Function.DrawCOM
 	o.delete        = Function.Delete
+
+	o.computeGraphPolar  = Function.ComputeGraphPolar
+
 	Function.instances[Function.ID] = o
 	Function.ID = Function.ID + 1
 	return o
@@ -77,12 +82,23 @@ Function.ComputeCOM = function (self)
 		Sy = Sy + self.graph[i].y * dL
 	end
 
-	self.com = {x = Sx / L, y = Sy / L}
+	self.com = { x = Sx/L, y = Sy/L }
 end
 
 Function.DrawCOM = function (self)
 	love.graphics.setColor(self.color)
 	love.graphics.circle("fill", self.com.x, self.com.y, 4)
+end
+
+Function.ComputeGraphPolar = function (self, fun)
+	self.graph = {}
+	for i = 1, #self.domain do
+		local x = self.domain[i]
+		local ro = fun(x, self.exp)
+		self.graph[i] = {x = ro*math.cos(x), y = -ro*math.sin(x)}
+	end
+
+	setmetatable(self.graph, Function.graph_metatables)
 end
 
 
