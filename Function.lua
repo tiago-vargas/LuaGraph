@@ -2,6 +2,8 @@ local Function = {}
 
 Function.instances = {}
 
+Function.ID = 1
+
 --[[ Prototype
 Function.prototype = {
 	plot      = Function.Plot,
@@ -16,16 +18,29 @@ Function.prototype = {
 Function.New = function (exp, color)
 	local o  = {}
 	o.exp    = exp
+	-- o.domain = domain
+	if o.domain == nil then
+		Function.SetDomain(o, -10, 10, 1800)
+	end
+
 	o.color  = color or Colors[Cor[ColorIndex]]
+	o.id     = Function.ID
 	ColorIndex = ColorIndex + 1
 	-- setmetatable(o, Function.metatables)
-	o.plot      = Function.Plot
-	o.setDomain = Function.SetDomain
+	o.plot          = Function.Plot
+	o.setDomain     = Function.SetDomain
 	o.computeGraph  = Function.ComputeGraph
 	o.computeCOM    = Function.ComputeCOM
-	o.drawCOM  = Function.DrawCOM
-	table.insert(Function.instances, o)
+	o.drawCOM       = Function.DrawCOM
+	o.delete        = Function.Delete
+	Function.instances[Function.ID] = o
+	Function.ID = Function.ID + 1
 	return o
+end
+
+Function.Delete = function (self)
+	Function.instances[self.id] = nil
+	-- self = nil
 end
 
 --[[ Draws the graph ]]
@@ -102,6 +117,13 @@ Function.Unpackgraph = function (graph)
 	end
 
 	return coordinates
+end
+
+-- [[ DEBUG ]] --
+Function.ListInstances = function ()
+	for k, v in pairs(Function.instances) do
+		print(k, v.exp)
+	end
 end
 
 return Function
