@@ -1,13 +1,27 @@
 Function = require("Function")
+Colors   = require("Colors")
 
 Origin = {}
 Scale  = {}
 
+Cor = {
+	-- "Black",
+	"Red",
+	"Green",
+	"Yellow",
+	"Blue",
+	"Purple",
+	"Cyan",
+	-- "White",
+}
+ColorIndex = 1
+
 Viewport = {}
 
--- Default = {
--- 	-- color
--- }
+Default = {
+	Color = Colors.Black,
+	Background = Colors.BrightWhite
+}
 
 
 function dist(P, Q)
@@ -30,14 +44,17 @@ function love.load(args)
 	Viewport.width, Viewport.height = love.graphics.getDimensions()
 	Origin = { x = Viewport.width/2, y = Viewport.height/2 }
 	Scale  = { Lx = 50, Ly = 50 }
+	love.graphics.setColor(Default.Color)
+	love.graphics.setBackgroundColor(Default.Background)
 
 -- [[   TEST   ]] --
 	f = Function.New()
 	f.exp = "(x-1)^2/2"
+	-- f.color = Colors.BrightYellow
 	f:setDomain(-3, 3, 600)
 
-	g = Function.New()
-	g.exp = "math.sin(x)"
+	g = Function.New("math.sin(x)")
+	g.color = Colors.BrightRed
 	g:setDomain(-3, 3, 600)
 -- [[ END TEST ]] --
 
@@ -74,6 +91,8 @@ function love.draw()
 		f:computeCOM()
 		f:drawCOM()
 	end
+
+	love.graphics.setColor(Default.Color)
 end
 
 function love.keypressed(key)

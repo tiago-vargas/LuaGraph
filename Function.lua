@@ -13,9 +13,11 @@ Function.prototype = {
 ]]
 
 --[[ Creates a new instance of `Function` ]]
-Function.New = function (exp)
+Function.New = function (exp, color)
 	local o  = {}
 	o.exp    = exp
+	o.color  = color or Colors[Cor[ColorIndex]]
+	ColorIndex = ColorIndex + 1
 	-- setmetatable(o, Function.metatables)
 	o.plot      = Function.Plot
 	o.setDomain = Function.SetDomain
@@ -28,6 +30,7 @@ end
 
 --[[ Draws the graph ]]
 Function.Plot = function (self)
+	love.graphics.setColor(self.color)
 	love.graphics.line(Function.Unpackgraph(self.graph + Origin))
 end
 
@@ -63,6 +66,7 @@ Function.ComputeCOM = function (self)
 end
 
 Function.DrawCOM = function (self)
+	love.graphics.setColor(self.color)
 	love.graphics.circle("fill", self.com.x, self.com.y, 4)
 end
 
