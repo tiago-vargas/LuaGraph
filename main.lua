@@ -3,7 +3,9 @@ Editor   = require("Editor")
 Colors   = require("Colors")
 
 Origin = {}
+
 local Scale  = {}
+local Viewport = {}
 
 local Mode = "cartesian"
 
@@ -28,8 +30,6 @@ Cor =
 }	-- "BrightWhite",
 ColorIndex = 1
 
-local Viewport = {}
-
 local Default =
 {
 	Mode       = "cartesian",
@@ -39,16 +39,16 @@ local Default =
 }
 
 --[[ draws 0x and 0y axes centered in `origin` ]]
-local function drawaxesxy(origin, screen_width, screen_height)
+local function draw_cartesian_axes(origin, screen_width, screen_height)
 	love.graphics.line(0, origin.y, screen_width,  origin.y) -- Ox
 	love.graphics.line(origin.x, 0, origin.x, screen_height) -- Oy
 end
 
 --[[ draws 0x polar axis centered in `origin` ]]
--- local function drawaxispolar(origin, screen_width, screen_height)
--- 	love.graphics.line(0, origin.y, screen_width,  origin.y) -- Ox
--- 	love.graphics.line(origin.x, 0, origin.x, screen_height) -- Oy
--- end
+local function draw_polar_axes(origin, screen_width, screen_height)
+	love.graphics.line(0, origin.y, screen_width,  origin.y) -- Ox
+	love.graphics.line(origin.x, 0, origin.x, screen_height) -- Oy
+end
 
 function love.load(args)
 	Viewport.width, Viewport.height = love.graphics.getDimensions()
@@ -59,9 +59,9 @@ function love.load(args)
 
 -- [[   TEST   ]] --
 	-- [[ CARTESIAN ]]
-	f = Function.New()
-	f.exp = "(x-1)^2/2"
-	f.mode = "cartesian"
+	-- f = Function.New()
+	-- f.exp  = "(x-1)^2/2"
+	-- f.mode = "cartesian"
 	-- f.color = Colors.BrightYellow
 	-- f:setDomain(-3, 3, 600)
 
@@ -110,18 +110,10 @@ function love.update(dt)
 			end
 		end
 	end
-	-- for k, v in pairs(Function.instances) do
-	-- 	if k ~= nil then
-	-- 		v:computeGraph(F)
-	-- 		v.graph = v.graph * Scale
-	-- 		-- f:computeCOM() -- doesn't work here, but compiles...
-	-- 	end
-	-- end
 
-
-	if     love.keyboard.isDown("up")    then
+	if     love.keyboard.isDown("up")   then
 		Origin.y = Origin.y + d
-	elseif love.keyboard.isDown("down")  then
+	elseif love.keyboard.isDown("down") then
 		Origin.y = Origin.y - d
 	end
 
@@ -143,7 +135,7 @@ function love.update(dt)
 end
 
 function love.draw()
-	drawaxesxy({ x = Origin.x, y = Origin.y }, Viewport.width, Viewport.height)
+	draw_cartesian_axes({ x = Origin.x, y = Origin.y }, Viewport.width, Viewport.height)
 
 	-- drawaxispolar({ x = Origin.x, y = Origin.y }, Viewport.width, Viewport.height)
 
@@ -156,14 +148,6 @@ function love.draw()
 		end
 	end
 
-	-- for k, v in pairs(Function.instances) do
-	-- 	if k ~= nil then
-	-- 		v:plot()
-	-- 		v:computeCOM()
-	-- 		v:drawCOM()
-	-- 	end
-	-- end
-
 	love.graphics.setColor(Default.Color)
 end
 
@@ -172,7 +156,6 @@ function love.keypressed(key)
 		debug.debug()
 	end
 
-	-- Not working!
 	if key == "kp0" or key == "0" then
 		Scale = Default.Scale
 	end

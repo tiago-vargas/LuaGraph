@@ -52,7 +52,7 @@ end
 ---
 ---@return table coordinates_sequence
 ---
-local function unpackgraph(graph)
+local function unpack_graph(graph)
 	local coordinates = {}
 
 	for i = 1, #graph do
@@ -63,6 +63,19 @@ local function unpackgraph(graph)
 	return coordinates
 end
 
+--- Checks if a `n` is not `inf`, `-inf` nor `nan`
+---
+---@param n number
+---
+---@return boolean
+---
+local function is_number(n)
+	if n ~= 1/0 and n ~= -1/0 and n == n and n ~= nil then
+		return true
+	end
+
+	return false
+end
 --#endregion
 
 
@@ -129,16 +142,6 @@ Function.New = function (exp, mode, color)
 	o.id     = Function.ID
 	ColorIndex = ColorIndex + 1
 
-	--[[
-	-- o.plot          = Function.plot
-	-- o.setDomain     = Function.setDomain
-	-- o.computeGraph  = Function.computeGraph
-	-- o.computeCOM    = Function.computeCOM
-	-- o.drawCOM       = Function.drawCOM
-	-- o.delete        = Function.delete
-	-- o.computeGraphPolar  = Function.computeGraphPolar
-	]]
-
 	Function.instances[Function.ID] = o
 	Function.ID = Function.ID + 1
 
@@ -178,13 +181,13 @@ end
 --- Removes a function from the list of instances
 Function.delete = function (self)
 	Function.instances[self.id] = nil
-	-- self = nil
+	-- self = nil -- Seems to have no effect...
 end
 
 --- Draws the graph based on the function's mode
 Function.plot = function (self)
 	love.graphics.setColor(self.color)
-	love.graphics.line(unpackgraph(self.graph + Origin))
+	love.graphics.line(unpack_graph(self.graph + Origin))
 end
 
 --- Sets the domain from `a` to `b`, with `numpoints` points
@@ -234,11 +237,14 @@ end
 --- Computes the center of mass of a graph
 Function.computeCOM = function (self)
 	local Sx, Sy, L = 0, 0, 0
+
 	for i = 1, #self.graph-1 do
-		local dL = dist(self.graph[i], self.graph[i+1])
-		L  = L + dL
-		Sx = Sx + self.graph[i].x * dL
-		Sy = Sy + self.graph[i].y * dL
+		if is_number(self.graph[i].y) and is_number(self.graph[i+1].y) then
+			local dL = dist(self.graph[i], self.graph[i+1])
+			L  = L + dL
+			Sx = Sx + self.graph[i].x * dL
+			Sy = Sy + self.graph[i].y * dL
+		end
 	end
 
 	self.com = { x = Sx/L, y = Sy/L }
