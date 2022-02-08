@@ -1,11 +1,14 @@
 Function = require("Function")
+Editor   = require("Editor")
 Colors   = require("Colors")
 
 Origin = {}
-Scale  = {}
-Mode   = "plane"
+local Scale  = {}
 
-Cor = {
+local Mode = "cartesian"
+
+Cor =
+{
 	-- "Black",
 	"Red",
 	"Green",
@@ -25,9 +28,11 @@ Cor = {
 }	-- "BrightWhite",
 ColorIndex = 1
 
-Viewport = {}
+local Viewport = {}
 
-Default = {
+local Default =
+{
+	Mode       = "cartesian",
 	Color      = Colors.Black,
 	Background = Colors.BrightWhite,
 	Scale      = { Lx = 50, Ly = 50 },
@@ -56,7 +61,7 @@ function love.load(args)
 	-- [[ XY ]]
 	f = Function.New()
 	f.exp = "(x-1)^2/2"
-	f.mode = "plane"
+	f.mode = "cartesian"
 	-- f.color = Colors.BrightYellow
 	-- f:setDomain(-3, 3, 600)
 
@@ -86,10 +91,10 @@ function love.load(args)
 end
 
 function love.update(dt)
-	if Mode == "plane" then
+	if Mode == "cartesian" then
 		for i = 1, Function.ID do
 			local f = Function.instances[i]
-			if f ~= nil and f.mode == "plane" then
+			if f ~= nil and f.mode == "cartesian" then
 				f:computeGraph()
 				f.graph = f.graph * Scale
 				-- f:computeCOM() -- doesn't work here, but compiles...
@@ -127,23 +132,23 @@ function love.update(dt)
 	end
 
 	if     love.keyboard.isDown("d") then
-		Scale.Lx = Scale.Lx + 2
+		Scale.Lx = Scale.Lx + d/2
 	elseif love.keyboard.isDown("a") then
-		Scale.Lx = Scale.Lx - 2
+		Scale.Lx = Scale.Lx - d/2
 	end
 
 	if     love.keyboard.isDown("w") then
-		Scale.Ly = Scale.Ly + 2
+		Scale.Ly = Scale.Ly + d/2
 	elseif love.keyboard.isDown("s") then
-		Scale.Ly = Scale.Ly - 2
+		Scale.Ly = Scale.Ly - d/2
 	end
 
 	if     love.keyboard.isDown("=") or love.keyboard.isDown("kp+") then
-		Scale.Lx = Scale.Lx + 2
-		Scale.Ly = Scale.Ly + 2
+		Scale.Lx = Scale.Lx + d/2
+		Scale.Ly = Scale.Ly + d/2
 	elseif love.keyboard.isDown("-") or love.keyboard.isDown("kp-") then
-		Scale.Lx = Scale.Lx - 2
-		Scale.Ly = Scale.Ly - 2
+		Scale.Lx = Scale.Lx - d/2
+		Scale.Ly = Scale.Ly - d/2
 	end
 end
 
