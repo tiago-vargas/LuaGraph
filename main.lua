@@ -7,28 +7,7 @@ Origin = {}
 local Scale  = {}
 local Viewport = {}
 
-local Mode = "cartesian"
-
-Cor =
-{
-	-- "Black",
-	"Red",
-	"Green",
-	"Yellow",
-	-- "Blue",
-	"Purple",
-	"Cyan",
-	-- "White",
-
-	-- "BrightBlack",
-	"BrightRed",
-	"BrightGreen",
-	"BrightYellow",
-	-- "BrightBlue",
-	"BrightPurple",
-	"BrightCyan",
-}	-- "BrightWhite",
-ColorIndex = 1
+-- local Mode = "cartesian"
 
 local Default =
 {
@@ -91,7 +70,7 @@ function love.load(args)
 end
 
 function love.update(dt)
-	if Mode == "cartesian" then
+	if Editor.mode == "cartesian" then
 		for i = 1, Function.ID do
 			local f = Function.instances[i]
 			if f ~= nil and f.mode == "cartesian" then
@@ -100,7 +79,7 @@ function love.update(dt)
 				-- f:computeCOM() -- doesn't work here, but compiles...
 			end
 		end
-	elseif Mode == "polar" then
+	elseif Editor.mode == "polar" then
 		for i = 1, Function.ID do
 			local f = Function.instances[i]
 			if f ~= nil and f.mode == "polar" then
@@ -135,13 +114,15 @@ function love.update(dt)
 end
 
 function love.draw()
-	draw_cartesian_axes({ x = Origin.x, y = Origin.y }, Viewport.width, Viewport.height)
-
-	-- drawaxispolar({ x = Origin.x, y = Origin.y }, Viewport.width, Viewport.height)
+	if Editor.mode == "cartesian" then
+		draw_cartesian_axes({ x = Origin.x, y = Origin.y }, Viewport.width, Viewport.height)
+	elseif Editor.mode == "polar" then
+		draw_polar_axes({ x = Origin.x, y = Origin.y }, Viewport.width, Viewport.height)
+	end
 
 	for i = 1, Function.ID do
 		local f = Function.instances[i]
-		if f ~= nil and f.mode == Mode then
+		if f ~= nil and f.mode == Editor.mode then
 			f:plot()
 			f:computeCOM()
 			f:drawCOM()
@@ -152,7 +133,7 @@ function love.draw()
 end
 
 function love.keypressed(key)
-	if key == "\\"and love.keyboard.isDown("rctrl") then
+	if key == "\\" and love.keyboard.isDown("rctrl") then
 		debug.debug()
 	end
 
