@@ -75,10 +75,10 @@ local mt = { __index = Function }
 local graph_mt =
 {
 	--- Applies a linear trasformation* on a graph
-	__mul = function (graph, transformation)
+	__mul = function (graph, scale)
 		for i = 1, #graph do
-			graph[i].x = graph[i].x * transformation.Lx
-			graph[i].y = graph[i].y * transformation.Ly
+			graph[i].x = graph[i].x * scale
+			graph[i].y = graph[i].y * scale
 		end
 		return graph
 	end,

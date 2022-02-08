@@ -35,7 +35,7 @@ local Default =
 	Mode       = "cartesian",
 	Color      = Colors.Black,
 	Background = Colors.BrightWhite,
-	Scale      = { Lx = 50, Ly = 50 },
+	Scale      = 50,
 }
 
 --[[ draws 0x and 0y axes centered in `origin` ]]
@@ -58,7 +58,7 @@ function love.load(args)
 	love.graphics.setBackgroundColor(Default.Background)
 
 -- [[   TEST   ]] --
-	-- [[ XY ]]
+	-- [[ CARTESIAN ]]
 	f = Function.New()
 	f.exp = "(x-1)^2/2"
 	f.mode = "cartesian"
@@ -131,24 +131,14 @@ function love.update(dt)
 		Origin.x = Origin.x - d
 	end
 
-	if     love.keyboard.isDown("d") then
-		Scale.Lx = Scale.Lx + d/2
-	elseif love.keyboard.isDown("a") then
-		Scale.Lx = Scale.Lx - d/2
-	end
-
-	if     love.keyboard.isDown("w") then
-		Scale.Ly = Scale.Ly + d/2
-	elseif love.keyboard.isDown("s") then
-		Scale.Ly = Scale.Ly - d/2
-	end
-
 	if     love.keyboard.isDown("=") or love.keyboard.isDown("kp+") then
-		Scale.Lx = Scale.Lx + d/2
-		Scale.Ly = Scale.Ly + d/2
+		Scale = Scale + d/2
 	elseif love.keyboard.isDown("-") or love.keyboard.isDown("kp-") then
-		Scale.Lx = Scale.Lx - d/2
-		Scale.Ly = Scale.Ly - d/2
+		Scale = Scale - d/2
+	end
+
+	if Scale < 1 then
+		Scale = 1
 	end
 end
 
