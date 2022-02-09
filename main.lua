@@ -4,8 +4,11 @@ Colors   = require("Colors")
 
 Origin = {}
 
-local Scale  = {}
-local Viewport = {}
+Scale = 0
+Viewport = {}
+
+-- For changing zoom and panning
+local d = 4
 
 -- local Mode = "cartesian"
 
@@ -25,8 +28,8 @@ end
 
 --[[ draws 0x polar axis centered in `origin` ]]
 local function draw_polar_axes(origin, screen_width, screen_height)
-	love.graphics.line(0, origin.y, screen_width,  origin.y) -- Ox
-	love.graphics.line(origin.x, 0, origin.x, screen_height) -- Oy
+	-- love.graphics.line(0, origin.y, screen_width,  origin.y) -- Ox
+	-- love.graphics.line(origin.x, 0, origin.x, screen_height) -- Oy
 end
 
 function love.load(args)
@@ -38,8 +41,8 @@ function love.load(args)
 
 -- [[   TEST   ]] --
 	-- [[ CARTESIAN ]]
-	-- f = Function.New()
-	-- f.exp  = "(x-1)^2/2"
+	f = Function.New()
+	f.exp  = "(x-1)^2 / 8"
 	-- f.mode = "cartesian"
 	-- f.color = Colors.BrightYellow
 	-- f:setDomain(-3, 3, 600)
@@ -65,8 +68,6 @@ function love.load(args)
 	q = Function.New("math.sin(1.25*x)", "polar")
 	q:setDomain(0, 2 * math.pi, 70)
 -- [[ END TEST ]] --
-
-	d = 4
 end
 
 function love.update(dt)
@@ -114,6 +115,8 @@ function love.update(dt)
 end
 
 function love.draw()
+	Editor.ShowHud()
+
 	if Editor.mode == "cartesian" then
 		draw_cartesian_axes({ x = Origin.x, y = Origin.y }, Viewport.width, Viewport.height)
 	elseif Editor.mode == "polar" then
