@@ -126,9 +126,9 @@ function love.draw()
 	for i = 1, Function.ID do
 		local f = Function.instances[i]
 		if f ~= nil and f.mode == Editor.mode then
-			f:plot()
+			Editor.Plot(f)
 			f:computeCOM()
-			f:drawCOM()
+			Editor.DrawCOM(f)
 		end
 	end
 

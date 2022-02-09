@@ -44,25 +44,6 @@ local function evaluate(x, funcexp)
 	return load("return " .. exp)()
 end
 
---- Unpacks table of points `(x, y)` into a sequence { x1, y1, x2, y2, ... }
----
---- Returns this sequence
----
----@param graph table
----
----@return table coordinates_sequence
----
-local function unpack_graph(graph)
-	local coordinates = {}
-
-	for i = 1, #graph do
-		table.insert(coordinates, graph[i].x)
-		table.insert(coordinates, graph[i].y)
-	end
-
-	return coordinates
-end
-
 --- Checks if a `n` is not `inf`, `-inf` nor `nan`
 ---
 ---@param n number
@@ -116,9 +97,9 @@ local graph_mt =
 
 
 --#region class methods
------------------------
---[[ Class Methods ]]--
------------------------
+-----------------------------------------------
+--[[ Class Methods                         ]]--
+-----------------------------------------------
 
 --- Creates a new instance of `Function`
 ---
@@ -184,12 +165,6 @@ Function.delete = function (self)
 	-- self = nil -- Seems to have no effect...
 end
 
---- Draws the graph based on the function's mode
-Function.plot = function (self)
-	love.graphics.setColor(self.color)
-	love.graphics.line(unpack_graph(self.graph + Origin))
-end
-
 --- Sets the domain from `a` to `b`, with `numpoints` points
 ---
 ---@param self table
@@ -248,12 +223,6 @@ Function.computeCOM = function (self)
 	end
 
 	self.com = { x = Sx/L, y = Sy/L }
-end
-
---- Draws the center of mass of a graph
-Function.drawCOM = function (self)
-	love.graphics.setColor(self.color)
-	love.graphics.circle("fill", self.com.x, self.com.y, 4)
 end
 
 --#endregion
