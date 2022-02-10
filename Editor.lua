@@ -1,15 +1,15 @@
 --- Manages graphes, functions, colors and such
 local Editor =
 {
-	-- activeMode     = { "cartesian", "polar" },
 	-- width,
 	-- height,
 	mode = "cartesian",
-	planeInstances = {},
-	polarInstances = {},
-	functions      = {},
-	origin         = {},
-	scale          = {},
+	-- planeInstances = {},
+	-- polarInstances = {},
+	instances = {},
+	functions = {},
+	origin    = {},
+	scale     = {},
 }
 
 Cor =
@@ -26,17 +26,12 @@ Cor =
 	-- "BrightBlack",
 	"BrightRed",
 	"BrightGreen",
-	"BrightYellow",
+	-- "BrightYellow",
 	-- "BrightBlue",
 	"BrightPurple",
 	"BrightCyan",
 }	-- "BrightWhite",
 ColorIndex = 1
-
-
-
-
-
 
 
 -----------------------------------------------
@@ -73,6 +68,45 @@ local Offset = 5
 --- Draws HUD
 Editor.ShowHud = function ()
 	love.graphics.print("Scale: " .. Scale, Offset, Viewport.height - Offset - Font:getHeight())
+
+	for i = 1, #Editor.instances do
+		local f = Editor.instances[i]
+		love.graphics.setColor(f.color)
+		-- love.graphics.print("#"..i..": " .. f.exp, Offset, Offset + Font:getHeight() * (i-1))
+		love.graphics.print(f.name.."(x) = " .. f.exp, Offset, Offset + Font:getHeight() * (i-1))
+	end
+end
+
+--- Creates a new instance of `Function`
+---
+---@param name   string # Name of the function
+---@param exp    string # Function expression
+---@param mode?  string # `"cartesian"` | `"polar"`
+---@param color? table  # Graph color
+---
+Editor.NewFunction = function (name, exp, mode, color)
+	local o = Function.New(exp, mode, color)
+	o.name = name
+
+	table.insert(Editor.instances, o)
+	-- o.id = #Editor.instances
+
+	return o
+end
+
+--- Deletes a function
+---
+---@param name string # Function name
+---
+Editor.RemoveFunction = function (name)
+	local i = 1
+	while i <= #Editor.instances and Editor.instances[i].name ~= name do
+		i = i + 1
+	end
+
+	if i <= #Editor.instances then
+		table.remove(Editor.instances, i)
+	end
 end
 
 --- Draws the graph based on the function's mode

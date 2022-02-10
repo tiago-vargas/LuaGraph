@@ -41,49 +41,58 @@ function love.load(args)
 
 -- [[   TEST   ]] --
 	-- [[ CARTESIAN ]]
-	f = Function.New()
-	f.exp  = "(x-1)^2 / 8"
+	Editor.NewFunction("f", "(x-1)^2 / 8")
+	Editor.NewFunction("g", "math.sin(x) - 2")
+	Editor.NewFunction("h", "math.sqrt( 9 - (x-1)^2 )")
+	-- Editor.NewFunction("i", "(x^5 - x^3 + 2*x - 4) / (x^3 - 5*x)")
+	Editor.NewFunction("j", "1/x")
+	Editor.NewFunction("k", "math.sin(4*x) / x ^ 2 * 2")
+
+	-- f = Function.New()
+	-- f.exp  = "(x-1)^2 / 8"
 	-- f.mode = "cartesian"
 	-- f.color = Colors.BrightYellow
 	-- f:setDomain(-3, 3, 600)
 
-	g = Function.New("math.sin(x) - 2")
+	-- g = Function.New("math.sin(x) - 2")
 	-- g.color = Colors.BrightRed
 	-- g:setDomain(-math.pi, math.pi, 600)
 
-	h = Function.New("math.sqrt( 9 - (x-1)^2 )")
+	-- h = Function.New("math.sqrt( 9 - (x-1)^2 )")
 	-- h.color = Colors.BrightPurple
 	-- h:setDomain(-3, 3, 600)
 
-	i = Function.New("(x^5 - x^3 + 2*x - 4) / (x^3 - 5*x)")
+	-- i = Function.New("(x^5 - x^3 + 2*x - 4) / (x^3 - 5*x)")
 	-- i.color = Colors.BrightCyan
 	-- i:setDomain(-3, 3, 600)
 
 	-- j = Function.New("1/x")
 
-	-- [[ POLAR ]]
-	p = Function.New("math.sin(4*x)", "polar")
-	p:setDomain(0, 2 * math.pi, 100)
+	-- k = Function.New("math.sin(4*x) / x ^ 2 * 2")
 
-	q = Function.New("math.sin(1.25*x)", "polar")
-	q:setDomain(0, 2 * math.pi, 70)
+	-- [[ POLAR ]]
+	-- p = Function.New("math.sin(4*x)", "polar")
+	-- p:setDomain(0, 2 * math.pi, 100)
+
+	-- q = Function.New("math.sin(1.25*x)", "polar")
+	-- q:setDomain(0, 2 * math.pi, 70)
 -- [[ END TEST ]] --
 end
 
 function love.update(dt)
 	if Editor.mode == "cartesian" then
-		for i = 1, Function.ID do
-			local f = Function.instances[i]
-			if f ~= nil and f.mode == "cartesian" then
+		for i = 1, #Editor.instances do
+			local f = Editor.instances[i]
+			if f.mode == "cartesian" then
 				f:computeGraph()
 				f.graph = f.graph * Scale
 				-- f:computeCOM() -- doesn't work here, but compiles...
 			end
 		end
 	elseif Editor.mode == "polar" then
-		for i = 1, Function.ID do
-			local f = Function.instances[i]
-			if f ~= nil and f.mode == "polar" then
+		for i = 1, #Editor.instances do
+			local f = Editor.instances[i]
+			if f.mode == "polar" then
 				f:computeGraphPolar()
 				f.graph = f.graph * Scale
 				-- f:computeCOM() -- doesn't work here, but compiles...
@@ -123,9 +132,9 @@ function love.draw()
 		draw_polar_axes({ x = Origin.x, y = Origin.y }, Viewport.width, Viewport.height)
 	end
 
-	for i = 1, Function.ID do
-		local f = Function.instances[i]
-		if f ~= nil and f.mode == Editor.mode then
+	for i = 1, #Editor.instances do
+		local f = Editor.instances[i]
+		if f.mode == Editor.mode and f.graph ~= nil then
 			Editor.Plot(f)
 			f:computeCOM()
 			Editor.DrawCOM(f)

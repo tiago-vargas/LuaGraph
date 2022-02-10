@@ -1,7 +1,9 @@
+-- local Editor = require("Editor")
+
 local Function =
 {
-	instances = {},
-	ID = 1
+	-- instances = {},
+	-- ID = 1
 }
 
 --#region auxiliary functions
@@ -117,14 +119,10 @@ Function.New = function (exp, mode, color)
 
 	o.exp    = exp
 	o.mode   = mode or "cartesian"
-	o.domain = Function.CreateDomain(-10, 10, 1000)
+	o.domain = Function.CreateDomain(-50, 50, 1000)
 
 	o.color  = color or Colors[Cor[ColorIndex]]
-	o.id     = Function.ID
 	ColorIndex = ColorIndex + 1
-
-	Function.instances[Function.ID] = o
-	Function.ID = Function.ID + 1
 
 	return o
 end
@@ -155,13 +153,14 @@ end
 
 
 --#region object methods
-------------------------
---[[ Object Methods ]]--
-------------------------
+-----------------------------------------------
+--[[ Object Methods                        ]]--
+-----------------------------------------------
+
 
 --- Removes a function from the list of instances
 Function.delete = function (self)
-	Function.instances[self.id] = nil
+	table.remove(Editor.instances, self.id)
 	-- self = nil -- Seems to have no effect...
 end
 
@@ -229,7 +228,7 @@ end
 
 -- [[ DEBUG ]] --
 Function.ListInstances = function ()
-	for k, v in pairs(Function.instances) do
+	for k, v in pairs(Editor.instances) do
 		print(k, v.exp)
 	end
 end
