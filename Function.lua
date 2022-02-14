@@ -1,10 +1,6 @@
 -- local Editor = require("Editor")
 
-local Function =
-{
-	-- instances = {},
-	-- ID = 1
-}
+local Function = {}
 
 --#region auxiliary functions
 -----------------------------------------------
@@ -18,7 +14,7 @@ local Function =
 ---
 ---@return number distance
 ---
-local function dist(P, Q)
+local function distance(P, Q)
 	local dx = P.x - Q.x
 	local dy = P.y - Q.y
 
@@ -46,7 +42,7 @@ local function evaluate(x, funcexp)
 	return load("return " .. exp)()
 end
 
---- Checks if a `n` is not `inf`, `-inf` nor `nan`
+--- Checks if a `n` is not `inf`, `-inf`, `nan` nor `nil`
 ---
 ---@param n number
 ---
@@ -109,47 +105,19 @@ local graph_mt =
 ---
 ---@param exp   string # Function expression
 ---@param mode  string # `"cartesian"` | `"polar"`
----@param color table
 ---
 ---@return table instance
 ---
-Function.New = function (exp, mode, color)
+Function.New = function (exp, mode)
 	local o  = {}
 	setmetatable(o, mt)
 
-	o.exp    = exp
-	o.mode   = mode or "cartesian"
-	o.domain = Function.CreateDomain(-50, 50, 1000)
-
-	o.color  = color or Colors[Cor[ColorIndex]]
-	ColorIndex = ColorIndex + 1
+	o.exp     = exp  or "x"
+	o.mode    = mode or "cartesian"
+	-- o.visible = true
 
 	return o
 end
-
---- Creates a domain with ends on `a` and `b`, with `n` subdivisions,
---- e.g. `n = 2` means just the two endpoints
----
---- Returns the domain
----
----@param a number
----@param b number
----@param n number
----
----@return table domain
----
-Function.CreateDomain = function (a, b, n)
-	local domain = {}
-	local dx = (b - a) / n
-
-	for i = a, b, dx do
-		table.insert(domain, i)
-	end
-
-	return domain
-end
-
---#endregion
 
 
 --#region object methods
@@ -157,33 +125,11 @@ end
 --[[ Object Methods                        ]]--
 -----------------------------------------------
 
-
---- Removes a function from the list of instances
-Function.delete = function (self)
-	table.remove(Editor.instances, self.id)
-	-- self = nil -- Seems to have no effect...
-end
-
---- Sets the domain from `a` to `b`, with `numpoints` points
----
----@param self table
----@param a number
----@param b number
----@param numpoints number
----
-Function.setDomain = function (self, a, b, numpoints)
-	self.domain = {}
-	local dx = (b-a) / (numpoints-1)
-	for i = a, b, dx do
-		table.insert(self.domain, i)
-	end
-end
-
 --- Computes the graph of a function based on its `domain` and sets it
 ---
 --- The graph is a table of `(x, f(x))` elements
 ---
-Function.computeGraph = function (self)
+Function.computeCartesianGraph = function (self)
 	self.graph = {}
 	setmetatable(self.graph, graph_mt)
 
@@ -197,7 +143,7 @@ end
 ---
 --- The graph is a table of `(p cos(t), p sin(t))` elements
 ---
-Function.computeGraphPolar = function (self)
+Function.computePolarGraph = function (self)
 	self.graph = {}
 	setmetatable(self.graph, graph_mt)
 
@@ -208,29 +154,32 @@ Function.computeGraphPolar = function (self)
 	end
 end
 
+Function.computeGraph = function (self)
+	if self.mode == "cartesian" then
+		self:computeCartesianGraph()
+	elseif self.mode == "polar" then
+		self:computePolarGraph()
+	end
+end
+
 --- Computes the center of mass of a graph
 Function.computeCOM = function (self)
 	local Sx, Sy, L = 0, 0, 0
+	local graph = self.graph
 
-	for i = 1, #self.graph-1 do
-		if is_number(self.graph[i].y) and is_number(self.graph[i+1].y) then
-			local dL = dist(self.graph[i], self.graph[i+1])
+	for i = 1, #graph-1 do
+		local P = graph[i]
+		local Q = graph[i + 1]
+		if is_number(P.y) and is_number(Q.y) then
+			local dL = distance(P, Q)
 			L  = L + dL
-			Sx = Sx + self.graph[i].x * dL
-			Sy = Sy + self.graph[i].y * dL
+			Sx = Sx + P.x * dL
+			Sy = Sy + P.y * dL
 		end
 	end
 
 	self.com = { x = Sx/L, y = Sy/L }
 end
-
 --#endregion
-
--- [[ DEBUG ]] --
-Function.ListInstances = function ()
-	for k, v in pairs(Editor.instances) do
-		print(k, v.exp)
-	end
-end
 
 return Function
