@@ -1,4 +1,5 @@
 local Function = require("Function")
+local Colors   = require("Colors")
 
 --- Manages graphes, functions, colors and such
 local Editor =
@@ -29,6 +30,7 @@ local ColorIndex = 1
 
 local Functions = {}
 
+
 -----------------------------------------------
 --[[ Auxiliary Functions                   ]]--
 -----------------------------------------------
@@ -53,6 +55,7 @@ local function unpack_graph(graph)
 	return coordinates_sequence
 end
 
+
 -----------------------------------------------
 --[[ Class Methods                         ]]--
 -----------------------------------------------
@@ -70,19 +73,27 @@ Editor.Initialize = function (defaults)
 end
 
 local Font = love.graphics.getFont()
-local Offset = 5
+local Margin = 5
 
 Editor.DrawHud = function ()
-	love.graphics.setColor(Editor.color)
-	love.graphics.print("Scale: " .. Editor.Scale, Offset, Viewport.height - Offset - Font:getHeight())
-
 	for i = 1, #Functions do
 		local f = Functions[i]
-		love.graphics.setColor(f.color)
-		love.graphics.print(f.name.."(x) = " .. f.exp, Offset, Offset + Font:getHeight() * (i-1))
+		if f.isVisible then
+			love.graphics.setColor(f.color)
+		else
+			love.graphics.setColor(Colors.White)
+		end
+
+		love.graphics.print(f.name.."(x) = " .. f.exp, Margin, Margin + (Margin + Font:getHeight())*(i - 1))
 	end
 
 	love.graphics.setColor(Editor.color)
+
+	local bottom = Editor.height - Margin - Font:getHeight()
+	local left   = Margin
+	local right  = Editor.width  - Margin - 100
+	love.graphics.print("Scale: " .. Editor.Scale, left, bottom)
+	love.graphics.print("Mode: "  .. Editor.Mode, right, bottom)
 end
 
 --- Creates a domain with ends on `a` and `b`, with `n` subdivisions,
@@ -155,7 +166,7 @@ Editor.DrawCOM = function (f)
 	love.graphics.circle("fill", f.com.x, f.com.y, dot_radius)
 
 	local x_pos = f.com.x - offset_center
-	local y_pos = f.com.y - Font:getHeight() - Offset
+	local y_pos = f.com.y - Font:getHeight() - Margin
 	-- love.graphics.print("CoM("..f.com.x - Origin.x..", "..f.com.y - Origin.y..")",
 	--                     x_pos, y_pos)
 	love.graphics.print("CoM", x_pos, y_pos)
@@ -202,7 +213,7 @@ end
 Editor.DrawAllFunctions = function ()
 	for i = 1, #Functions do
 		local f = Functions[i]
-		if f.mode == Editor.Mode then
+		if f.mode == Editor.Mode and f.isVisible then
 			DrawFunction(f)
 		end
 	end

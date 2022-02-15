@@ -66,7 +66,9 @@ local mt = { __index = Function }
 
 local graph_mt =
 {
-	--- Applies a linear trasformation* on a graph
+	---
+	---@param graph table
+	---@param scale number
 	__mul = function (graph, scale)
 		for i = 1, #graph do
 			graph[i].x = graph[i].x * scale
@@ -94,33 +96,27 @@ local graph_mt =
 }
 
 
---#region class methods
 -----------------------------------------------
 --[[ Class Methods                         ]]--
 -----------------------------------------------
 
---- Creates a new instance of `Function`
----
---- Returns the instance
 ---
 ---@param exp   string # Function expression
 ---@param mode  string # `"cartesian"` | `"polar"`
 ---
 ---@return table instance
----
 Function.New = function (exp, mode)
 	local o  = {}
 	setmetatable(o, mt)
 
-	o.exp     = exp  or "x"
-	o.mode    = mode or "cartesian"
-	-- o.visible = true
+	o.exp  = exp  or "x"
+	o.mode = mode or "cartesian"
+	o.isVisible = true
 
 	return o
 end
 
 
---#region object methods
 -----------------------------------------------
 --[[ Object Methods                        ]]--
 -----------------------------------------------
@@ -141,16 +137,16 @@ end
 
 --- Computes the graph of a function in polar coordinates based on its `domain` and sets it
 ---
---- The graph is a table of `(p cos(t), p sin(t))` elements
+--- The graph is a table of `( p(t) cos(t), p(t) sin(t) )` elements
 ---
 Function.computePolarGraph = function (self)
 	self.graph = {}
 	setmetatable(self.graph, graph_mt)
 
 	for i = 1, #self.domain do
-		local x = self.domain[i]
-		local p = evaluate(x, self.exp)
-		self.graph[i] = { x = p*math.cos(x), y = -p*math.sin(x) }
+		local t = self.domain[i]
+		local p = evaluate(t, self.exp)
+		self.graph[i] = { x = p*math.cos(t), y = -p*math.sin(t) }
 	end
 end
 
@@ -162,24 +158,27 @@ Function.computeGraph = function (self)
 	end
 end
 
---- Computes the center of mass of a graph
 Function.computeCOM = function (self)
 	local Sx, Sy, L = 0, 0, 0
 	local graph = self.graph
+	local n = #graph - 1
 
-	for i = 1, #graph-1 do
+	for i = 1, n do
 		local P = graph[i]
 		local Q = graph[i + 1]
 		if is_number(P.y) and is_number(Q.y) then
 			local dL = distance(P, Q)
 			L  = L + dL
-			Sx = Sx + P.x * dL
-			Sy = Sy + P.y * dL
+			-- Sx = Sx + P.x * dL
+			-- Sy = Sy + P.y * dL
+			local xm = (P.x + Q.x) / 2
+			local ym = (P.y + Q.y) / 2
+			Sx = Sx + xm * dL
+			Sy = Sy + ym * dL
 		end
 	end
 
 	self.com = { x = Sx/L, y = Sy/L }
 end
---#endregion
 
 return Function

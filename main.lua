@@ -23,17 +23,20 @@ local function TEST_FUNCTIONS()
 	Editor.NewFunction("j", "1/x")
 	Editor.NewFunction("k", "math.sin(4*x) / x ^ 2 * 2")
 
-	g = Editor.NewFunction("g", "math.sin(x) - 2")
-	-- g:setDomain(-math.pi, math.pi, 600)
 	-- print(f.graph)
 
 
 	-- [[ POLAR ]]
 	p = Editor.NewFunction("p", "math.sin(4*x)", "polar")
 	p.domain = Editor.NewDomain(0, 2 * math.pi, 100)
+	p.isVisible = false
 
 	q = Editor.NewFunction("q", "math.sin(1.25*x)", "polar")
 	q.domain = Editor.NewDomain(0, 2 * math.pi, 70)
+	q.isVisible = false
+
+	r = Editor.NewFunction("r", "1", "polar")
+	r.domain = Editor.NewDomain(0, 2*math.pi, 100)
 end
 
 function love.load(args)
@@ -57,8 +60,18 @@ function love.draw()
 end
 
 function love.keypressed(key)
-	if key == "\\" and love.keyboard.isDown("rctrl") then
+	local is_ctrl_down = love.keyboard.isDown("rctrl") or love.keyboard.isDown("lctrl")
+
+	if key == "\\" and is_ctrl_down then
 		debug.debug()
+	end
+
+	if key == "m" and is_ctrl_down then
+		if     Editor.Mode == "polar" then
+			Editor.Mode = "cartesian"
+		elseif Editor.Mode == "cartesian" then
+			Editor.Mode = "polar"
+		end
 	end
 
 	if key == "kp0" or key == "0" then
