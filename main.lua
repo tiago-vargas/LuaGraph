@@ -1,4 +1,3 @@
-local Function = require("Function")
 Editor   = require("Editor")
 Colors   = require("Colors")
 
@@ -6,9 +5,9 @@ PI = math.pi
 
 local Defaults =
 {
-	Mode       = "cartesian",
+	Mode       = "polar",
 	Color      = Colors.Black,
-	Background = Colors.BrightWhite,
+	Background = Colors.White,
 	Scale      = 50,
 }
 
@@ -21,9 +20,6 @@ local function TEST_FUNCTIONS()
 	Editor.NewFunction("j", "1/x")
 	Editor.NewFunction("k", "sin(4*x) / x ^ 2 * 2")
 
-	-- print(f.graph)
-
-
 	-- [[ POLAR ]]
 	p = Editor.NewFunction("p", "sin(4*x)", "polar")
 	p.domain = Editor.NewDomain(0, 2 * PI, 100)
@@ -35,6 +31,11 @@ local function TEST_FUNCTIONS()
 
 	r = Editor.NewFunction("r", "1", "polar")
 	r.domain = Editor.NewDomain(0, 2*PI, 100)
+	r.isVisible = false
+
+	s = Editor.NewFunction("s", "(sin(x)*sqrt(abs(cos(x)))) / (sin(x) + 7/5) - 2*sin(x) + 2", "polar")
+	s.domain = Editor.NewDomain(0, 2*PI, 200)
+	-- s.isVisible = false
 end
 
 function love.load(args)
@@ -44,7 +45,8 @@ function love.load(args)
 end
 
 function love.update(dt)
-	Editor.ComputeAllFunctions()
+	Editor.ComputeAllGraphs()
+	Editor.ComputeAllCOMs()
 
 	Editor.ManageOriginPanning()
 	Editor.ManageZoom()
@@ -54,7 +56,8 @@ function love.draw()
 	Editor.DrawHud()
 
 	Editor.DrawAxes()
-	Editor.DrawAllFunctions()
+	Editor.PlotAllGraphs()
+	Editor.PlotAllCOMs()
 end
 
 function love.keypressed(key)

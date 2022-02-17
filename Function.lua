@@ -2,6 +2,11 @@
 
 local Function = {}
 
+-- sin = math.sin
+-- local asin = math.asin
+-- local cos = math.cos
+-- local acos = math.acos
+
 -----------------------------------------------
 --[[ Auxiliary functions                   ]]--
 -----------------------------------------------
@@ -13,7 +18,7 @@ local function distance(P, Q)
 	return math.sqrt( dx ^ 2 + dy ^ 2 )
 end
 
-local function eval(expression)
+local function evaluate(expression)
 	return load("return " .. expression)()
 end
 
@@ -24,14 +29,14 @@ local function treat_expression(pretty_exp)
 	math_exp = math_exp:gsub("cos",  "math.cos")
 	math_exp = math_exp:gsub("tan",  "math.tan")
 	math_exp = math_exp:gsub("sqrt", "math.sqrt")
-	math_exp = math_exp:gsub("PI",   "math.pi")
 	math_exp = math_exp:gsub("abs",  "math.abs")
+	math_exp = math_exp:gsub("exp",  "math.exp")
+	math_exp = math_exp:gsub("ln",   "math.log")
+	math_exp = math_exp:gsub("log",  "math.log10")
+	math_exp = math_exp:gsub("pow",  "math.pow")
+	math_exp = math_exp:gsub("PI",   "math.pi")
 
 	return math_exp
-end
-
-Function.treatExpression = function (self)
-	self.math_exp = treat_expression(self.pretty_exp)
 end
 
 local function is_number(n)
@@ -44,23 +49,32 @@ end
 
 local function apply_to_self(self, value)
 	local exp = self.math_exp:gsub("x", value)
-	return eval(exp)
+	return evaluate(exp)
 end
 
+-- MELHORAR
 local function translate_graph(graph, vector)
+	local new_graph = {}
+
 	for i = 1, #graph do
-		graph[i].x = graph[i].x + vector.x
-		graph[i].y = graph[i].y + vector.y
+		new_graph[i] = {}
+		new_graph[i].x = graph[i].x + vector.x
+		new_graph[i].y = graph[i].y + vector.y
 	end
-	return graph
+	return new_graph
 end
 
+-- MELHORAR
 local function scale_graph(graph, factor)
+	local new_graph = {}
+	setmetatable(new_graph, { __add = translate_graph })
+
 	for i = 1, #graph do
-		graph[i].x = graph[i].x * factor
-		graph[i].y = graph[i].y * factor
+		new_graph[i] = {}
+		new_graph[i].x = graph[i].x * factor
+		new_graph[i].y = graph[i].y * factor
 	end
-	return graph
+	return new_graph
 end
 
 
@@ -70,29 +84,20 @@ end
 
 local mt = { __index = Function, __call = apply_to_self }
 
-local graph_mt = { __mul = scale_graph, __add = translate_graph }
+local graph_mt = { __mul = scale_graph }
 
 
 -----------------------------------------------
 --[[ Class Methods                         ]]--
 -----------------------------------------------
 
---- Returns an instance of `Function`
----
----@param pretty_exp   string # Function expression
----@param mode  string # `"cartesian"` | `"polar"`
----
----@return table instance
----
 Function.New = function (pretty_exp, mode)
 	local o  = {}
 	setmetatable(o, mt)
 
 	o.pretty_exp  = pretty_exp  or "x"
-	o.mode = mode or "cartesian"
-	o.isVisible = true
-	-- o:treatExpression()
-	o.math_exp = treat_expression(pretty_exp)
+	o.mode        = mode or "cartesian"
+	o.math_exp    = treat_expression(pretty_exp)
 
 	return o
 end
@@ -102,10 +107,7 @@ end
 --[[ Object Methods                        ]]--
 -----------------------------------------------
 
---- Computes the graph of a function based on its `domain` and sets it
----
---- The graph is a table of `(x, f(x))` elements
----
+--- Computes the graph a table of `(x, f(x))` elements
 Function.computeCartesianGraph = function (self)
 	for i = 1, #self.domain do
 		local xi = self.domain[i]
@@ -113,10 +115,7 @@ Function.computeCartesianGraph = function (self)
 	end
 end
 
---- Computes the graph of a function in polar coordinates based on its `domain` and sets it
----
---- The graph is a table of `( p(t) cos(t), p(t) sin(t) )` elements
----
+--- Computes the graph a table of `( p cos(t), p sin(t) )` elements
 Function.computePolarGraph = function (self)
 	for i = 1, #self.domain do
 		local t = self.domain[i]

@@ -3,6 +3,7 @@ local Colors   = require("Colors")
 
 local Editor = {}
 
+-- MELHORAR
 FunctionColors =
 {
 	"Red",
@@ -11,8 +12,8 @@ FunctionColors =
 	"Blue",
 	"Purple",
 	"Cyan",
+	"Grey",
 
-	"BrightBlack",
 	"BrightRed",
 	"BrightGreen",
 	"BrightBlue",
@@ -29,13 +30,9 @@ local Width, Height
 --[[ Auxiliary Functions                   ]]--
 -----------------------------------------------
 
---- Unpacks a table of points `(x, y)` into a sequence `{ x1, y1, x2, y2, ... }`
----
---- Returns this sequence
+--- Returns a table of points `(x, y)` as a sequence `{ x1, y1, x2, y2, ... }`
 ---
 ---@param graph table # Table of ordered pairs
----
----@return table coordinates_sequence
 ---
 local function unpack_graph(graph)
 	local coordinates_sequence = {}
@@ -64,22 +61,30 @@ Editor.Initialize = function (defaults)
 	Editor.Mode       = defaults.Mode
 	Editor.Scale      = defaults.Scale
 	Editor.Origin     = { x = Width/2, y = Height/2 }
+	Editor.Domain     = Editor.NewDomain(-50, 50, 1000)
 end
 
 local Font = love.graphics.getFont()
 local Margin = 5
 
-Editor.DrawHud = function ()
+-- EXPLICAR
+local function DrawNameList()
 	for i = 1, #Functions do
 		local f = Functions[i]
 		if f.isVisible then
 			love.graphics.setColor(f.color)
 		else
-			love.graphics.setColor(Colors.White)
+			love.graphics.setColor(Colors.BrightGrey)
 		end
 
-		love.graphics.print(f.name.."(x) = " .. f.pretty_exp, Margin, Margin + (Margin + Font:getHeight())*(i - 1))
+		local text  = string.format("%s(x) = %s", f.name, f.pretty_exp)
+		local name_y_pos = (Font:getHeight() + Margin) * (i - 1)
+		love.graphics.print(text, Margin, Margin + name_y_pos)
 	end
+end
+
+Editor.DrawHud = function ()
+	DrawNameList()
 
 	love.graphics.setColor(Editor.Color)
 
@@ -90,12 +95,15 @@ Editor.DrawHud = function ()
 	love.graphics.print("Mode: "  .. Editor.Mode, right, bottom)
 end
 
---- Creates a domain from `a` to `b`, with `n` subdivisions
----
---- Returns the domain
-Editor.NewDomain = function (a, b, n)
+Editor.DrawAxes = function ()
+	local O = Editor.Origin
+	love.graphics.line(0, O.y,  Width,  O.y) -- Ox
+	love.graphics.line(O.x, 0,  O.x, Height) -- Oy
+end
+
+Editor.NewDomain = function (a, b, subdivisions)
 	local domain = {}
-	local dx = (b - a) / n
+	local dx = (b - a) / subdivisions
 
 	for x = a, b, dx do
 		table.insert(domain, x)
@@ -104,27 +112,26 @@ Editor.NewDomain = function (a, b, n)
 	return domain
 end
 
+-- MELHORAR
 --- Creates a new instance of `Function`
 ---
----@param name       string # Name of the function
 ---@param pretty_exp string # Function expression without `"math."`
 ---@param mode?      string # `"cartesian"` | `"polar"`
----@param color?     table  # Graph color
 ---
-Editor.NewFunction = function (name, pretty_exp, mode, color)
+Editor.NewFunction = function (name, pretty_exp, mode)
 	local o = Function.New(pretty_exp, mode)
 	table.insert(Functions, o)
 
-	o.name     = name
-	o.color    = color or Colors[FunctionColors[ColorIndex]]
-	ColorIndex = ColorIndex + 1
-
-	o.domain = Editor.NewDomain(-50, 50, 1000)
-	o:computeGraph()
+	o.name      = name
+	o.isVisible = true
+	o.domain    = Editor.Domain
+	o.color     = Colors[FunctionColors[ColorIndex]]
+	ColorIndex  = ColorIndex + 1
 
 	return o
 end
 
+-- ESTUDAR
 Editor.RemoveFunction = function (name)
 	local i = 1
 
@@ -140,64 +147,59 @@ end
 local dot_radius = 4
 local offset_center = 13
 
---- Draws the center of mass of a graph
----
----@param f table # `Function`
----
-Editor.DrawCOM = function (f)
-	love.graphics.setColor(f.color)
-	love.graphics.circle("fill", f.com.x, f.com.y, dot_radius)
-
-	local x_pos = f.com.x - offset_center
-	local y_pos = f.com.y - Font:getHeight() - Margin
-	-- love.graphics.print("CoM("..f.com.x - Origin.x..", "..f.com.y - Origin.y..")",
-	--                     x_pos, y_pos)
-	love.graphics.print("CoM", x_pos, y_pos)
-end
-
-local function ComputeFunction(f)
-	if Editor.Mode == "cartesian" then
-		f:computeCartesianGraph()
-	elseif Editor.Mode == "polar" then
-		f:computePolarGraph()
-	end
-
-	f.graph = f.graph * Editor.Scale
-	-- f:computeCOM() -- doesn't work here, but compiles...
-end
-
-Editor.ComputeAllFunctions = function ()
+Editor.ComputeAllGraphs = function ()
 	for i = 1, #Functions do
 		local f = Functions[i]
 		if f.mode == Editor.Mode then
-			ComputeFunction(f)
+			f:computeGraph()
 		end
 	end
 end
 
---- Draws the graph relative to the origin
----
---- The system in which the graph is drawn is based on the function's mode
----
----@param f table # `Function`
----
-Editor.Plot = function (f)
+Editor.ComputeAllCOMs = function ()
+	for i = 1, #Functions do
+		local f = Functions[i]
+		if f.mode == Editor.Mode then
+			f:computeCOM()
+		end
+	end
+end
+
+-- MELHORAR
+local function Plot(f)
 	love.graphics.setColor(f.color)
-	love.graphics.line(unpack_graph(f.graph + Editor.Origin))
+	love.graphics.line(unpack_graph(f.graph * Editor.Scale + Editor.Origin))
 end
 
-
-local function DrawFunction(f)
-	Editor.Plot(f)
-	f:computeCOM() -- should not be here...
-	Editor.DrawCOM(f)
-end
-
-Editor.DrawAllFunctions = function ()
+Editor.PlotAllGraphs = function ()
 	for i = 1, #Functions do
 		local f = Functions[i]
 		if f.mode == Editor.Mode and f.isVisible then
-			DrawFunction(f)
+			Plot(f)
+		end
+	end
+end
+
+-- MELHORAR
+local function PlotCOM(f)
+	love.graphics.setColor(f.color)
+
+	local x_pos = f.com.x * Editor.Scale + Editor.Origin.x
+	local y_pos = f.com.y * Editor.Scale + Editor.Origin.y
+	love.graphics.circle("fill", x_pos, y_pos, dot_radius)
+
+	x_pos = x_pos - offset_center
+	y_pos = y_pos - Font:getHeight() - Margin
+
+	local text = string.format("CoM (%.2f, %.2f)", f.com.x, -f.com.y)
+	love.graphics.print(text, x_pos, y_pos)
+end
+
+Editor.PlotAllCOMs = function ()
+	for i = 1, #Functions do
+		local f = Functions[i]
+		if f.mode == Editor.Mode and f.isVisible then
+			PlotCOM(f)
 		end
 	end
 end
@@ -235,12 +237,6 @@ Editor.ManageZoom = function ()
 	if Editor.Scale < 1 then
 		Editor.Scale = 1
 	end
-end
-
-Editor.DrawAxes = function ()
-	local O = Editor.Origin
-	love.graphics.line(0, O.y,  Width,  O.y) -- Ox
-	love.graphics.line(O.x, 0,  O.x, Height) -- Oy
 end
 
 Editor.ChangeMode = function ()
