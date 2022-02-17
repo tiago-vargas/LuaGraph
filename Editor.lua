@@ -67,19 +67,27 @@ end
 local Font = love.graphics.getFont()
 local Margin = 5
 
+-- MELHORAR
+local function DrawName(f, i)
+	local text = string.format("%s(x) = %s", f.name, f.pretty_exp)
+	local name_y_pos = (Font:getHeight() + Margin) * (i - 1)
+	love.graphics.print(text, Margin, Margin + name_y_pos)
+end
+
 -- EXPLICAR
 local function DrawNameList()
-	for i = 1, #Functions do
-		local f = Functions[i]
+	local index = 0
+	for _, f in pairs(Functions) do
 		if f.isVisible then
 			love.graphics.setColor(f.color)
 		else
 			love.graphics.setColor(Colors.BrightGrey)
 		end
 
-		local text  = string.format("%s(x) = %s", f.name, f.pretty_exp)
-		local name_y_pos = (Font:getHeight() + Margin) * (i - 1)
-		love.graphics.print(text, Margin, Margin + name_y_pos)
+		if f.mode == Editor.Mode then
+			index = index + 1
+			DrawName(f, index)
+		end
 	end
 end
 
@@ -133,7 +141,7 @@ end
 
 -- ESTUDAR
 Editor.RemoveFunction = function (name)
-	local i = 1
+	local i = 0
 
 	repeat
 		i = i + 1
