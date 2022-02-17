@@ -2,18 +2,10 @@
 
 local Function = {}
 
---#region auxiliary functions
 -----------------------------------------------
 --[[ Auxiliary functions                   ]]--
 -----------------------------------------------
 
---- Returns the distance between two points
----
----@param P table # point (x, y)
----@param Q table # point (x, y)
----
----@return number distance
----
 local function distance(P, Q)
 	local dx = P.x - Q.x
 	local dy = P.y - Q.y
@@ -21,33 +13,27 @@ local function distance(P, Q)
 	return math.sqrt( dx ^ 2 + dy ^ 2 )
 end
 
---- Substitutes `x` for its value in an expression `funcexp`
----
---- Returns the evaluation
----
----@param x       number # the value to substitute
----@param funcexp string # the expression
----
----@return number evaluation
----
-local function evaluate(x, funcexp)
-	local exp = funcexp:gsub("x", x)
-	--[[ Sketch
-	exp = exp:gsub("sin",  "math.sin")
-	exp = exp:gsub("cos",  "math.cos")
-	exp = exp:gsub("tan",  "math.tan")
-	exp = exp:gsub("sqrt", "math.sqrt")
-	exp = exp:gsub("pi",   "math.pi")
-	]]
-	return load("return " .. exp)()
+local function eval(expression)
+	return load("return " .. expression)()
 end
 
---- Checks if a `n` is not `inf`, `-inf`, `nan` nor `nil`
----
----@param n number
----
----@return boolean
----
+local function treat_expression(pretty_exp)
+	local math_exp
+
+	math_exp = pretty_exp:gsub("sin",  "math.sin")
+	math_exp = math_exp:gsub("cos",  "math.cos")
+	math_exp = math_exp:gsub("tan",  "math.tan")
+	math_exp = math_exp:gsub("sqrt", "math.sqrt")
+	math_exp = math_exp:gsub("PI",   "math.pi")
+	math_exp = math_exp:gsub("abs",  "math.abs")
+
+	return math_exp
+end
+
+Function.treatExpression = function (self)
+	self.math_exp = treat_expression(self.pretty_exp)
+end
+
 local function is_number(n)
 	if n ~= 1/0 and n ~= -1/0 and n == n and n ~= nil then
 		return true
@@ -55,63 +41,58 @@ local function is_number(n)
 
 	return false
 end
---#endregion
+
+local function apply_to_self(self, value)
+	local exp = self.math_exp:gsub("x", value)
+	return eval(exp)
+end
+
+local function translate_graph(graph, vector)
+	for i = 1, #graph do
+		graph[i].x = graph[i].x + vector.x
+		graph[i].y = graph[i].y + vector.y
+	end
+	return graph
+end
+
+local function scale_graph(graph, factor)
+	for i = 1, #graph do
+		graph[i].x = graph[i].x * factor
+		graph[i].y = graph[i].y * factor
+	end
+	return graph
+end
 
 
 --===========================================--
 --[[ `Function` class                      ]]--
 --===========================================--
 
-local mt = { __index = Function }
+local mt = { __index = Function, __call = apply_to_self }
 
-local graph_mt =
-{
-	---
-	---@param graph table
-	---@param scale number
-	__mul = function (graph, scale)
-		for i = 1, #graph do
-			graph[i].x = graph[i].x * scale
-			graph[i].y = graph[i].y * scale
-		end
-		return graph
-	end,
-
-	--- Translates a graph in the direction of `vector`
-	---
-	--- Returns the translated graph
-	---
-	---@param graph  table
-	---@param vector table
-	---
-	---@return table translated_graph
-	---
-	__add = function (graph, vector)
-		for i = 1, #graph do
-			graph[i].x = graph[i].x + vector.x
-			graph[i].y = graph[i].y + vector.y
-		end
-		return graph
-	end
-}
+local graph_mt = { __mul = scale_graph, __add = translate_graph }
 
 
 -----------------------------------------------
 --[[ Class Methods                         ]]--
 -----------------------------------------------
 
+--- Returns an instance of `Function`
 ---
----@param exp   string # Function expression
+---@param pretty_exp   string # Function expression
 ---@param mode  string # `"cartesian"` | `"polar"`
 ---
 ---@return table instance
-Function.New = function (exp, mode)
+---
+Function.New = function (pretty_exp, mode)
 	local o  = {}
 	setmetatable(o, mt)
 
-	o.exp  = exp  or "x"
+	o.pretty_exp  = pretty_exp  or "x"
 	o.mode = mode or "cartesian"
 	o.isVisible = true
+	-- o:treatExpression()
+	o.math_exp = treat_expression(pretty_exp)
 
 	return o
 end
@@ -126,12 +107,9 @@ end
 --- The graph is a table of `(x, f(x))` elements
 ---
 Function.computeCartesianGraph = function (self)
-	self.graph = {}
-	setmetatable(self.graph, graph_mt)
-
 	for i = 1, #self.domain do
-		local x = self.domain[i]
-		self.graph[i] = { x = x, y = -evaluate(x, self.exp) }
+		local xi = self.domain[i]
+		self.graph[i] = { x = xi, y = -self(xi) }
 	end
 end
 
@@ -140,17 +118,17 @@ end
 --- The graph is a table of `( p(t) cos(t), p(t) sin(t) )` elements
 ---
 Function.computePolarGraph = function (self)
-	self.graph = {}
-	setmetatable(self.graph, graph_mt)
-
 	for i = 1, #self.domain do
 		local t = self.domain[i]
-		local p = evaluate(t, self.exp)
+		local p = self(t)
 		self.graph[i] = { x = p*math.cos(t), y = -p*math.sin(t) }
 	end
 end
 
 Function.computeGraph = function (self)
+	self.graph = {}
+	setmetatable(self.graph, graph_mt)
+
 	if self.mode == "cartesian" then
 		self:computeCartesianGraph()
 	elseif self.mode == "polar" then
@@ -159,7 +137,7 @@ Function.computeGraph = function (self)
 end
 
 Function.computeCOM = function (self)
-	local Sx, Sy, L = 0, 0, 0
+	local Sxdl, Sydl, L = 0, 0, 0
 	local graph = self.graph
 	local n = #graph - 1
 
@@ -167,18 +145,17 @@ Function.computeCOM = function (self)
 		local P = graph[i]
 		local Q = graph[i + 1]
 		if is_number(P.y) and is_number(Q.y) then
-			local dL = distance(P, Q)
-			L  = L + dL
-			-- Sx = Sx + P.x * dL
-			-- Sy = Sy + P.y * dL
-			local xm = (P.x + Q.x) / 2
-			local ym = (P.y + Q.y) / 2
-			Sx = Sx + xm * dL
-			Sy = Sy + ym * dL
+			local dLi = distance(P, Q)
+			local xmi = (P.x + Q.x) / 2
+			local ymi = (P.y + Q.y) / 2
+
+			L = L + dLi
+			Sxdl = Sxdl + xmi * dLi
+			Sydl = Sydl + ymi * dLi
 		end
 	end
 
-	self.com = { x = Sx/L, y = Sy/L }
+	self.com = { x = Sxdl/L, y = Sydl/L }
 end
 
 return Function

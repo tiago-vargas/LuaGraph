@@ -1,15 +1,7 @@
 local Function = require("Function")
 local Colors   = require("Colors")
 
---- Manages graphes, functions, colors and such
-local Editor =
-{
-	-- width,
-	-- height,
-	Mode = "cartesian",
-	Origin    = {},
-	Scale     = 0
-}
+local Editor = {}
 
 FunctionColors =
 {
@@ -29,6 +21,8 @@ FunctionColors =
 local ColorIndex = 1
 
 local Functions = {}
+
+local Width, Height
 
 
 -----------------------------------------------
@@ -63,13 +57,13 @@ end
 Editor.Initialize = function (defaults)
 	love.graphics.setColor(defaults.Color)
 	love.graphics.setBackgroundColor(defaults.Background)
+	Width, Height = love.graphics.getDimensions()
 
-	Editor.color      = defaults.Color
-	Editor.background = defaults.Background
+	Editor.Color      = defaults.Color
+	Editor.Background = defaults.Background
+	Editor.Mode       = defaults.Mode
 	Editor.Scale      = defaults.Scale
-	Editor.Origin     = defaults.Origin
-	Editor.width      = Viewport.width
-	Editor.height     = Viewport.height
+	Editor.Origin     = { x = Width/2, y = Height/2 }
 end
 
 local Font = love.graphics.getFont()
@@ -84,29 +78,21 @@ Editor.DrawHud = function ()
 			love.graphics.setColor(Colors.White)
 		end
 
-		love.graphics.print(f.name.."(x) = " .. f.exp, Margin, Margin + (Margin + Font:getHeight())*(i - 1))
+		love.graphics.print(f.name.."(x) = " .. f.pretty_exp, Margin, Margin + (Margin + Font:getHeight())*(i - 1))
 	end
 
-	love.graphics.setColor(Editor.color)
+	love.graphics.setColor(Editor.Color)
 
-	local bottom = Editor.height - Margin - Font:getHeight()
+	local bottom = Height - Margin - Font:getHeight()
 	local left   = Margin
-	local right  = Editor.width  - Margin - 100
+	local right  = Width  - Margin - 100
 	love.graphics.print("Scale: " .. Editor.Scale, left, bottom)
 	love.graphics.print("Mode: "  .. Editor.Mode, right, bottom)
 end
 
---- Creates a domain with ends on `a` and `b`, with `n` subdivisions,
---- e.g. `n = 2` means just the two endpoints
+--- Creates a domain from `a` to `b`, with `n` subdivisions
 ---
 --- Returns the domain
----
----@param a number
----@param b number
----@param n number
----
----@return table domain
----
 Editor.NewDomain = function (a, b, n)
 	local domain = {}
 	local dx = (b - a) / n
@@ -120,13 +106,13 @@ end
 
 --- Creates a new instance of `Function`
 ---
----@param name   string # Name of the function
----@param exp    string # Function expression
----@param mode?  string # `"cartesian"` | `"polar"`
----@param color? table  # Graph color
+---@param name       string # Name of the function
+---@param pretty_exp string # Function expression without `"math."`
+---@param mode?      string # `"cartesian"` | `"polar"`
+---@param color?     table  # Graph color
 ---
-Editor.NewFunction = function (name, exp, mode, color)
-	local o = Function.New(exp, mode)
+Editor.NewFunction = function (name, pretty_exp, mode, color)
+	local o = Function.New(pretty_exp, mode)
 	table.insert(Functions, o)
 
 	o.name     = name
@@ -139,15 +125,12 @@ Editor.NewFunction = function (name, exp, mode, color)
 	return o
 end
 
---- Deletes a function
----
----@param name string # Function name
----
 Editor.RemoveFunction = function (name)
 	local i = 1
-	while i <= #Functions and Functions[i].name ~= name do
+
+	repeat
 		i = i + 1
-	end
+	until Functions[i].name == name
 
 	if i <= #Functions then
 		table.remove(Functions, i)
@@ -254,22 +237,17 @@ Editor.ManageZoom = function ()
 	end
 end
 
-Editor.DrawCartesianSubgrid = function ()
-end
-
-Editor.DrawPolarSubgrid = function ()
-end
-
---- Draws Ox and Oy axes centered in the Origin
 Editor.DrawAxes = function ()
 	local O = Editor.Origin
-	love.graphics.line(0, O.y,  Editor.width,  O.y) -- Ox
-	love.graphics.line(O.x, 0,  O.x, Editor.height) -- Oy
+	love.graphics.line(0, O.y,  Width,  O.y) -- Ox
+	love.graphics.line(O.x, 0,  O.x, Height) -- Oy
+end
 
-	if Editor.Mode == "cartesian" then
-		Editor.DrawCartesianSubgrid()
-	elseif Editor.Mode == "polar" then
-		Editor.DrawPolarSubgrid()
+Editor.ChangeMode = function ()
+	if     Editor.Mode == "polar" then
+		Editor.Mode = "cartesian"
+	elseif Editor.Mode == "cartesian" then
+		Editor.Mode = "polar"
 	end
 end
 
