@@ -1,8 +1,6 @@
 Editor = require("Editor")
 Colors = require("Colors")
 
-require("temp")
-
 PI = math.pi
 
 local Defaults =
