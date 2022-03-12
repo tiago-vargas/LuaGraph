@@ -1,11 +1,4 @@
--- local Editor = require("Editor")
-
 local Function = {}
-
--- sin = math.sin
--- local asin = math.asin
--- local cos = math.cos
--- local acos = math.acos
 
 -----------------------------------------------
 --[[ Auxiliary functions                   ]]--
@@ -48,43 +41,36 @@ local function is_number(n)
 end
 
 local function apply_to_self(self, value)
-	local exp = self.math_exp:gsub("x", value)
+	local exp = self.mathExp:gsub("x", value)
 	return evaluate(exp)
 end
 
--- MELHORAR
 local function translate_graph(graph, vector)
 	local new_graph = {}
 
 	for i = 1, #graph do
-		new_graph[i] = {}
-		new_graph[i].x = graph[i].x + vector.x
-		new_graph[i].y = graph[i].y + vector.y
+		new_graph[i] =
+		{
+			x = graph[i].x + vector.x,
+			y = graph[i].y + vector.y
+		}
 	end
 	return new_graph
 end
 
--- MELHORAR
 local function scale_graph(graph, factor)
 	local new_graph = {}
 	setmetatable(new_graph, { __add = translate_graph })
 
 	for i = 1, #graph do
-		new_graph[i] = {}
-		new_graph[i].x = graph[i].x * factor
-		new_graph[i].y = graph[i].y * factor
+		new_graph[i] =
+		{
+			x = graph[i].x *  factor,
+			y = graph[i].y * -factor
+		}
 	end
 	return new_graph
 end
-
-
---===========================================--
---[[ `Function` class                      ]]--
---===========================================--
-
-local mt = { __index = Function, __call = apply_to_self }
-
-local graph_mt = { __mul = scale_graph }
 
 
 -----------------------------------------------
@@ -93,11 +79,11 @@ local graph_mt = { __mul = scale_graph }
 
 Function.New = function (pretty_exp, mode)
 	local o  = {}
-	setmetatable(o, mt)
+	setmetatable(o, { __index = Function, __call = apply_to_self })
 
-	o.pretty_exp  = pretty_exp  or "x"
-	o.mode        = mode or "cartesian"
-	o.math_exp    = treat_expression(pretty_exp)
+	o.prettyExp = pretty_exp  or "x"
+	o.mode      = mode or "cartesian"
+	o.mathExp   = treat_expression(pretty_exp)
 
 	return o
 end
@@ -107,26 +93,24 @@ end
 --[[ Object Methods                        ]]--
 -----------------------------------------------
 
---- Computes the graph a table of `(x, f(x))` elements
 Function.computeCartesianGraph = function (self)
-	for i = 1, #self.domain do
-		local xi = self.domain[i]
-		self.graph[i] = { x = xi, y = -self(xi) }
+	for i, xi in pairs(self.domain) do
+		local P = { x = xi, y = self(xi) }
+		self.graph[i] = P
 	end
 end
 
---- Computes the graph a table of `( p cos(t), p sin(t) )` elements
 Function.computePolarGraph = function (self)
-	for i = 1, #self.domain do
-		local t = self.domain[i]
-		local p = self(t)
-		self.graph[i] = { x = p*math.cos(t), y = -p*math.sin(t) }
+	for _, theta in pairs(self.domain) do
+		local ro = self(theta)
+		local P  = { x = ro*math.cos(theta), y = ro*math.sin(theta) }
+		table.insert(self.graph, P)
 	end
 end
 
 Function.computeGraph = function (self)
 	self.graph = {}
-	setmetatable(self.graph, graph_mt)
+	setmetatable(self.graph, { __mul = scale_graph })
 
 	if self.mode == "cartesian" then
 		self:computeCartesianGraph()
@@ -138,7 +122,7 @@ end
 Function.computeCOM = function (self)
 	local Sxdl, Sydl, L = 0, 0, 0
 	local graph = self.graph
-	local n = #graph - 1
+	local n     = #graph - 1
 
 	for i = 1, n do
 		local P = graph[i]
@@ -148,9 +132,9 @@ Function.computeCOM = function (self)
 			local xmi = (P.x + Q.x) / 2
 			local ymi = (P.y + Q.y) / 2
 
-			L = L + dLi
-			Sxdl = Sxdl + xmi * dLi
-			Sydl = Sydl + ymi * dLi
+			L    = L + dLi
+			Sxdl = Sxdl + (xmi * dLi)
+			Sydl = Sydl + (ymi * dLi)
 		end
 	end
 

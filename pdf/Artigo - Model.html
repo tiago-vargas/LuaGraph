@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>CAPA</title>
+	<style>
+		/* From extension vscode.github */
+		.vscode-dark img[src$=\#gh-light-mode-only],
+		.vscode-light img[src$=\#gh-dark-mode-only] {
+			display: none;
+		}
+
+		.katex-error {
+			color: var(--vscode-editorError-foreground);
+		}
+
+	</style>
+
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+	<link rel="stylesheet" href="./my-style.css">
+
+	<style>
+		body {
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+			line-height: 1.6;
+		}
+	</style>
+
+	<style>
+		.task-list-item { list-style-type: none; } .task-list-item-checkbox { margin-left: -20px; vertical-align: middle; }
+	</style>
+</head>
+	<body class="vscode-body vscode-light">
+		<h1 id="capa">CAPA</h1>
+		<!-- CAPAAAAAAAAAAA -->
+		<!-- CAPAAAAAAAAAAA -->
+		<!-- CAPAAAAAAAAAAA -->
+		<!-- CAPAAAAAAAAAAA -->
+		<!-- CAPAAAAAAAAAAA -->
+		<!-- GraphIt! -->
+
+		<h1 id="sumário">Sumário</h1>
+		<ul>
+			<li>Introdução</li>
+			<li>Teoria
+			<ul>
+				<li>Plotagem (cartesiano)</li>
+				<li>Plotagem (polar)</li>
+				<li>Centro de Massa</li>
+			</ul>
+			</li>
+			<li>Aplicação</li>
+			<li>Referências</li>
+		</ul>
+
+		<h1 id="pequena-introdução">Pequena Introdução</h1>
+		<p>Esse <em>documento</em> discute um programa de computador de plotagem de gráficos, bem como um pouco da teoria utilizada para criá-lo.</p>
+		<p>O programa é capaz de:</p>
+		<ul>
+			<li>Plotar gráficos em coordenadas cartesianas e polares</li>
+			<li>Mostrar o centro de massa de uma curva plotada</li>
+		</ul>
+		<p>A linguagem escolhida foi Lua, usando LÖVE para executar o programa.</p>
+		<p>A criação e a edição de funções são feitas pela linha de comando.</p>
+		<p>Boa parte do código fonte é possível entender apenas lendo (desde que saiba inglês). Trechos interessantes ou mais complicados serão discutidos.</p>
+
+		<h1 id="teoria-e-implementação">Teoria e Implementação</h1>
+		<!-- # Um pouco da teoria a ser aplicada -->
+
+		<h2 id="funções">Funções</h2>
+		<p>Funções são criadas e editadas pela linha de comando, mais precisamente, pelo console de debug. Para acessar o console, pressione <code>Ctrl</code> + <code>enter</code>. Para sair do console, digite <code>cont</code>.</p>
+		<p>Funções foram implementadas como um objeto (na verdade, o nome correto é <em>tabela</em>). Uma função possui:</p>
+		<ul>
+			<li>Um nome</li>
+			<li>Uma expressão</li>
+			<li>Um domínio</li>
+			<li>Um gráfico</li>
+			<li>Um modo, que diz se ela deve ser desenhada no plano cartesiano ou polar</li>
+			<li>Uma visibilidade</li>
+			<li>Uma cor</li>
+		</ul>
+		<p>É possível modificar qualquer um desses atributos de uma função pelo console, mas você só precisa se preocupar com o nome, a expressão e o modo da função. Se um domínio não for explicitamente definido, o domínio padrão será utilizado.</p>
+		<p>Funções são manipuladas internamente pelo Editor. A maior parte da interação com o Editor se dá pelo console.</p>
+		<p>Definidos nome, expressão e domínio de uma função, o programa se encarrega de plotar seu gráfico e marcar seu centro de massa no plano.</p>
+
+		<h2 id="plotagem">Plotagem</h2>
+		<p>Dados um domínio e uma função <code>f</code>, a plotagem é feita marcando no plano todos os pares ordenados <code>(x, f(x))</code>, com <code>x</code> assumindo todos os valores no domínio.</p>
+		<p>O programa exige um conjunto discreto para o domínio. Podemos gerar um domínio passando ao programa os dois valores que o delimita, bem como o número de subdivisões.</p>
+		<p>O programa marca no plano todos os pontos <code>(x, f(x))</code>, os conectando por segmentos de reta. Esta será a representação do gráfico de <code>f</code>.</p>
+		<p>Como consequência, funções reais contínuas não podem ser exatamente plotadas, mas podemos gerar uma figura suficientemente fiel à esperada, desde que forneçamos um número suficientemente grande de subdivisões.</p>
+		<p><strong>Exemplo:</strong>
+		Gráfico de <code>f(x) = x^2</code>, para <code>x</code> em <code>[-1, 4]</code> com <code>n = 1000</code> subdivisões.</p>
+		<!-- IMAGEM DO GRAFICO AQUI -->
+		<p>Agora para <code>[-1, 4]</code> com <code>n = 4</code> subdivisões.</p>
+		<!-- IMAGEM DO GRAFICO AQUI -->
+		<!-- **NOTA:**
+		Se o gráfico for uma reta, podemos representá-lo apenas com dois pontos no domínio, pois o programa irá conectá-los. Porém, essa representação -->
+
+		<h2 id="centro-de-massa">Centro de Massa</h2>
+		<p>Para calcular o centro de massa de uma curva, assumimos antes que a curva tem densidade linear uniforme.</p>
+		<p>Como um gráfico foi implementado como uma sequência de segmentos de reta, basta considerar que cada segmento tem uma massa, e calcular as contribuições de cada.</p>
+		<!-- MOSTRAR IMAGEM EXPLICATIVA -->
+
+		<h2 id="translação-e-zoom">Translação e Zoom</h2>
+		<p>Caso não seja possível ver um gráfico por completo, podemos &quot;arrastar&quot; o plano para os lados, os diminuir o zoom.</p>
+		<p>As setas do teclado movimentam a origem. Como as figuras são desenhadas com base na origem do editor, o efeito é de o plano ser arrastado para os lados. Inicialmente, a origem se encontra no centro da janela.</p>
+		<p>As teclas de <code>+</code> e de <code>-</code> controlam o zoom, o aumentando ou o diminuindo, respectivamente. Isso é implementado multiplicando todos os pontos dos gráficos por uma constante <code>Scale</code> referente ao grau de ampliação. Por exemplo, quando <code>Scale</code> vale <code>1</code>, cada pixel na tela representa uma unidade no plano. Como as figuras seriam muito pequenas nessa escala, seu valor padrão é <code>50</code> (uma unidade dista 50 pixels). Imagine a ampliação como um transformação linear que apenas &quot;estica&quot; ou &quot;encolhe&quot; os vetores unitários <code>i</code> e <code>j</code>.</p>
+
+		<h1 id="aplicação">Aplicação</h1>
+		<!-- Plotagem em coordenadas polares nao eh muito intuitiva -->
+		<!-- ==> O programa mostra o desenho pra voce -->
+		<!-- Visualizar onde tah o CM pode ser dificil -->
+		<!-- ==> O programa mostra rapidamente o CM -->
+		<!-- Com CODIGO FONTE aqui -->
+		<!-- O código fonte possui a seguinte estrutura: -->
+		<p>O código fonte é composto pelos seguintes arquivos:</p>
+		<ul>
+			<li>
+				<p><code>main.lua</code></p>
+				<ul>
+					<li>É o ponto de entrada do programa.</li>
+				</ul>
+			</li>
+			<li>
+				<p><code>Function.lua</code></p>
+				<ul>
+					<li>Descreve as funções criadas como objetos.</li>
+				</ul>
+			</li>
+			<li>
+				<p><code>Editor.lua</code></p>
+				<ul>
+					<li>Administra as funções e mostra informações na tela.</li>
+				</ul>
+			</li>
+			<li>
+				<p><code>Colors.lua</code></p>
+				<ul>
+					<li>Apenas descreve as cores que serão usadas no programa.</li>
+				</ul>
+			</li>
+		</ul>
+
+		<h2 id="arquivo-mainlua">Arquivo <code>main.lua</code></h2>
+		<pre><code class="language-lua"><div><span class="hljs-comment">-- arquivo</span>
+		</div></code></pre>
+		<p>LÖVE se encarrega de executar esse arquivo. LÖVE inicia chamando a função <code>love.load()</code> quando o programa carrega, e em seguida, chama as funções <code>love.update()</code> e <code>love.draw()</code> sucessivamente, até que o programa seja fechado.</p>
+		<p><code>Defaults</code> é uma tabela com valores padrões, para não ser preciso inserí-los sempre que o programa iniciar. O programa carrega no modo cartesiano, com cor primária preta, fundo branco, de origem no centro da janela, ampliado em 50 vezes.</p>
+		<p>A função <code>love.load()</code> é chamada quando o programa inicia. Ou seja, quando iniciar, o editor será inicializado com os valores padrões em <code>Defaults</code>.</p>
+		<p><code>love.update()</code> é usada para atualizar o ambiente e <code>love.draw()</code> é usada para desenhar as figuras na tela.</p>
+		<p>A cada ciclo, o editor irá:</p>
+		<ul>
+			<li>Computar todas as funções</li>
+			<li>Administrar translações da origem</li>
+			<li>Administrar zoom</li>
+			<li>Escrever as informações na tela</li>
+			<li>Desenhar os eixos x e y</li>
+			<li>Desenhar todas as funções criadas (e visíveis)</li>
+		</ul>
+		<p>LÖVE chama a função <code>love.keypressed()</code> sempre que uma tecla é pressionada. Aqui é checado se o usuário pressiona <code>Ctrl</code> + <code>\</code> (inicia o console) ou se pressiona <code>0</code>, que reseta o zoom.</p>
+
+		<h2 id="arquivo-functionlua">Arquivo <code>Function.lua</code></h2>
+		<pre><code class="language-lua"><div><span class="hljs-comment">-- arquivo</span>
+		</div></code></pre>
+
+		<h2 id="arquivo-editorlua">Arquivo <code>Editor.lua</code></h2>
+		<pre><code class="language-lua"><div><span class="hljs-comment">-- arquivo</span>
+		</div></code></pre>
+
+		<h2 id="arquivo-colorslua">Arquivo <code>Colors.lua</code></h2>
+		<pre><code class="language-lua"><div><span class="hljs-comment">-- arquivo</span>
+		</div></code></pre>
+
+		<h1 id="referências">Referências</h1>
+		<p>Repositório:</p>
+		<!--  -->
+		<p><a href="URL" title="https://love2d.org/">LÖVE</a></p>
+		<p><a href="URL" title="https://www.lua.org/">Lua</a></p>
+
+	</body>
+	</html>

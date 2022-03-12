@@ -3,26 +3,32 @@ local Colors   = require("Colors")
 
 local Editor = {}
 
--- MELHORAR
 FunctionColors =
 {
-	"Red",
-	"Green",
-	"Yellow",
-	"Blue",
-	"Purple",
-	"Cyan",
-	"Grey",
-
-	"BrightRed",
-	"BrightGreen",
-	"BrightBlue",
-	"BrightPurple",
+	Colors.Red,
+	Colors.Green,
+	Colors.Yellow,
+	Colors.Blue,
+	Colors.Purple,
+	Colors.Cyan,
+	Colors.Grey,
+	Colors.BrightRed,
+	Colors.BrightGreen,
+	Colors.BrightBlue,
+	Colors.BrightPurple,
 }
-local ColorIndex = 1
+local ColorIndex = 0
+
+local function GetNextColor()
+	ColorIndex  = ColorIndex + 1
+
+	if ColorIndex > #FunctionColors then
+		ColorIndex = 1
+	end
+	return FunctionColors[ColorIndex]
+end
 
 local Functions = {}
-
 local Width, Height
 
 
@@ -61,52 +67,7 @@ Editor.Initialize = function (defaults)
 	Editor.Mode       = defaults.Mode
 	Editor.Scale      = defaults.Scale
 	Editor.Origin     = { x = Width/2, y = Height/2 }
-	Editor.Domain     = Editor.NewDomain(-50, 50, 1000)
-end
-
-local Font = love.graphics.getFont()
-local Margin = 5
-
--- MELHORAR
-local function DrawName(f, i)
-	local text = string.format("%s(x) = %s", f.name, f.pretty_exp)
-	local name_y_pos = (Font:getHeight() + Margin) * (i - 1)
-	love.graphics.print(text, Margin, Margin + name_y_pos)
-end
-
--- EXPLICAR
-local function DrawNameList()
-	local index = 0
-	for _, f in pairs(Functions) do
-		if f.isVisible then
-			love.graphics.setColor(f.color)
-		else
-			love.graphics.setColor(Colors.BrightGrey)
-		end
-
-		if f.mode == Editor.Mode then
-			index = index + 1
-			DrawName(f, index)
-		end
-	end
-end
-
-Editor.DrawHud = function ()
-	DrawNameList()
-
-	love.graphics.setColor(Editor.Color)
-
-	local bottom = Height - Margin - Font:getHeight()
-	local left   = Margin
-	local right  = Width  - Margin - 100
-	love.graphics.print("Scale: " .. Editor.Scale, left, bottom)
-	love.graphics.print("Mode: "  .. Editor.Mode, right, bottom)
-end
-
-Editor.DrawAxes = function ()
-	local O = Editor.Origin
-	love.graphics.line(0, O.y,  Width,  O.y) -- Ox
-	love.graphics.line(O.x, 0,  O.x, Height) -- Oy
+	Editor.Domain     = Editor.NewDomain(-50, 50, 2000)
 end
 
 Editor.NewDomain = function (a, b, subdivisions)
@@ -120,7 +81,6 @@ Editor.NewDomain = function (a, b, subdivisions)
 	return domain
 end
 
--- MELHORAR
 --- Creates a new instance of `Function`
 ---
 ---@param pretty_exp string # Function expression without `"math."`
@@ -128,36 +88,22 @@ end
 ---
 Editor.NewFunction = function (name, pretty_exp, mode)
 	local o = Function.New(pretty_exp, mode)
-	table.insert(Functions, o)
+	Functions[name] = o
 
 	o.name      = name
 	o.isVisible = true
 	o.domain    = Editor.Domain
-	o.color     = Colors[FunctionColors[ColorIndex]]
-	ColorIndex  = ColorIndex + 1
+	o.color     = GetNextColor()
 
 	return o
 end
 
--- ESTUDAR
 Editor.RemoveFunction = function (name)
-	local i = 0
-
-	repeat
-		i = i + 1
-	until Functions[i].name == name
-
-	if i <= #Functions then
-		table.remove(Functions, i)
-	end
+	Functions[name] = nil
 end
 
-local dot_radius = 4
-local offset_center = 13
-
 Editor.ComputeAllGraphs = function ()
-	for i = 1, #Functions do
-		local f = Functions[i]
+	for _, f in pairs(Functions) do
 		if f.mode == Editor.Mode then
 			f:computeGraph()
 		end
@@ -165,47 +111,90 @@ Editor.ComputeAllGraphs = function ()
 end
 
 Editor.ComputeAllCOMs = function ()
-	for i = 1, #Functions do
-		local f = Functions[i]
+	for _, f in pairs(Functions) do
 		if f.mode == Editor.Mode then
 			f:computeCOM()
 		end
 	end
 end
 
--- MELHORAR
+local Font = love.graphics.getFont()
+local Margin = 5
+
+local function WriteNameInList(f, i)
+	local text = string.format("%s(x) = %s", f.name, f.prettyExp)
+	local name_y_pos = (Font:getHeight() + Margin) * i
+	love.graphics.print(text, Margin, Margin + name_y_pos)
+end
+
+local function ListFunctionNames()
+	local index = 0
+	for _, f in pairs(Functions) do
+		if f.isVisible then
+			love.graphics.setColor(f.color)
+		else
+			love.graphics.setColor(Colors.BrightGrey)
+		end
+
+		if f.mode == Editor.Mode then
+			index = index + 1
+			WriteNameInList(f, index)
+		end
+	end
+
+	love.graphics.setColor(Editor.Color)
+end
+
+Editor.DrawHud = function ()
+	love.graphics.setColor(Editor.Color)
+
+	love.graphics.print("-- Functions --", Margin, Margin)
+	ListFunctionNames()
+
+	local bottom = Height - Margin - Font:getHeight()
+	local right  = Width  - Margin - 100
+	love.graphics.print("Scale: " .. Editor.Scale, Margin, bottom)
+	love.graphics.print("Mode: "  .. Editor.Mode,  right,  bottom)
+end
+
+Editor.DrawAxes = function ()
+	local O = Editor.Origin
+	love.graphics.line(0, O.y,  Width,  O.y) -- Ox
+	love.graphics.line(O.x, 0,  O.x, Height) -- Oy
+end
+
 local function Plot(f)
 	love.graphics.setColor(f.color)
-	love.graphics.line(unpack_graph(f.graph * Editor.Scale + Editor.Origin))
+
+	local transformed_graph = (f.graph * Editor.Scale) + Editor.Origin
+	love.graphics.line(unpack_graph(transformed_graph))
 end
 
 Editor.PlotAllGraphs = function ()
-	for i = 1, #Functions do
-		local f = Functions[i]
+	for _, f in pairs(Functions) do
 		if f.mode == Editor.Mode and f.isVisible then
 			Plot(f)
 		end
 	end
 end
 
--- MELHORAR
+local point_radius = 4
+
 local function PlotCOM(f)
 	love.graphics.setColor(f.color)
 
-	local x_pos = f.com.x * Editor.Scale + Editor.Origin.x
-	local y_pos = f.com.y * Editor.Scale + Editor.Origin.y
-	love.graphics.circle("fill", x_pos, y_pos, dot_radius)
+	local com_x_pos = (f.com.x *  Editor.Scale) + Editor.Origin.x
+	local com_y_pos = (f.com.y * -Editor.Scale) + Editor.Origin.y
+	love.graphics.circle("fill", com_x_pos, com_y_pos, point_radius)
 
-	x_pos = x_pos - offset_center
-	y_pos = y_pos - Font:getHeight() - Margin
-
-	local text = string.format("CoM (%.2f, %.2f)", f.com.x, -f.com.y)
-	love.graphics.print(text, x_pos, y_pos)
+	local text_x_pos = com_x_pos + Margin
+	local text_y_pos = com_y_pos - Margin - Font:getHeight()
+	local text = string.format("CoM (%.2f, %.2f)", f.com.x, f.com.y)
+	love.graphics.print(text, text_x_pos, text_y_pos)
 end
 
 Editor.PlotAllCOMs = function ()
-	for i = 1, #Functions do
-		local f = Functions[i]
+	for _, f in pairs(Functions) do
 		if f.mode == Editor.Mode and f.isVisible then
 			PlotCOM(f)
 		end
